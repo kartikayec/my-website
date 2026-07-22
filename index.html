@@ -3,38 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to SmartNiwas</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #0f172a; /* Sleek dark background */
-            color: #f8fafc;
-        }
-        .container {
-            text-align: center;
-        }
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(to right, #38bdf8, #818cf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        p {
-            color: #94a3b8;
-            font-size: 1.2rem;
-        }
-    </style>
+    <title>SmartNiwas Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Hello, World!</h1>
-        <p>Welcome to smartniwas.com</p>
-    </div>
+    <div class="glass-bg"></div>
+
+    <main class="portal-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fa-solid fa-house-chimney-window"></i>
+                <span>smart<strong>niwas</strong></span>
+            </div>
+            <div id="live-clock" class="live-clock">Loading time...</div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="portal-grid">
+            
+            <!-- Column 1: Directory -->
+            <section class="grid-section directory-section">
+                <h2><i class="fa-solid fa-users"></i> Member Directory</h2>
+                <div class="member-grid" id="member-grid">
+                    <!-- Cards will be dynamically rendered by app.js -->
+                </div>
+            </section>
+
+            <!-- Column 2: Dashboard & Notes -->
+            <div class="right-column">
+                <!-- Quick Links -->
+                <section class="grid-section links-section">
+                    <h2><i class="fa-solid fa-compass"></i> Quick Dashboard Links</h2>
+                    <div class="links-grid">
+                        <a href="#" class="link-card"><i class="fa-solid fa-images"></i> Photos</a>
+                        <a href="#" class="link-card"><i class="fa-solid fa-folder-open"></i> Shared Drive</a>
+                        <a href="#" class="link-card"><i class="fa-solid fa-server"></i> Media Server</a>
+                        <a href="#" class="link-card"><i class="fa-solid fa-laptop-house"></i> Home Assistant</a>
+                    </div>
+                </section>
+
+                <!-- Sticky Notes Board -->
+                <section class="grid-section notes-section">
+                    <div class="notes-header">
+                        <h2><i class="fa-solid fa-note-sticky"></i> Shared Notice Board</h2>
+                        <button id="add-note-btn" class="btn"><i class="fa-solid fa-plus"></i> Add Note</button>
+                    </div>
+                    <div class="notes-grid" id="notes-grid">
+                        <!-- Notes will be loaded here -->
+                    </div>
+                </section>
+            </div>
+
+        </div>
+    </main>
+    <script src="app.js"></script>
 </body>
 </html>
