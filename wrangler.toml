@@ -1,0 +1,4 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "smartniwas"
+compatibility_date = "2026-07-26"
+pages_build_output_dir = "."

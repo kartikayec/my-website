@@ -1,0 +1,20 @@
+{
+  "name": "smartniwas",
+  "version": "1.0.0",
+  "description": "SmartNiwas family portal deployed on Cloudflare Pages",
+  "main": "app.js",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy ."
+  },
+  "keywords": [
+    "cloudflare-pages",
+    "smartniwas",
+    "portal"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "wrangler": "^3.109.0"
+  }
+}

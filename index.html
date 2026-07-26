@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartNiwas Portal</title>
+    <meta name="description" content="SmartNiwas Portal - A unified glassmorphic home portal featuring a member directory, interactive notice board, and quick dashboard access.">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://smartniwas.com/">
+    <meta property="og:title" content="SmartNiwas Portal">
+    <meta property="og:description" content="A unified home portal featuring a member directory, interactive notice board, and quick dashboard access.">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://smartniwas.com/">
+    <meta property="twitter:title" content="SmartNiwas Portal">
+    <meta property="twitter:description" content="A unified home portal featuring a member directory, interactive notice board, and quick dashboard access.">
+
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -11,14 +26,15 @@
 </head>
 <body>
     <div class="glass-bg"></div>
+    <div class="glass-bg secondary-bg"></div>
 
     <main class="portal-container">
         <!-- Header -->
         <header class="header">
-            <div class="logo">
+            <h1 class="logo">
                 <i class="fa-solid fa-house-chimney-window"></i>
                 <span>smart<strong>niwas</strong></span>
-            </div>
+            </h1>
             <div id="live-clock" class="live-clock">Loading time...</div>
         </header>
 
@@ -60,6 +76,25 @@
 
         </div>
     </main>
+
+    <!-- Glassmorphic Add Note Modal -->
+    <div id="note-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <button id="close-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+            <h2 id="modal-title"><i class="fa-solid fa-pen-nib"></i> Add New Notice</h2>
+            <form id="note-form">
+                <div class="form-group">
+                    <label for="note-text" class="form-label">Write your message:</label>
+                    <textarea id="note-text" placeholder="Write something on the board..." required maxlength="200" rows="4"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancel-note-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
