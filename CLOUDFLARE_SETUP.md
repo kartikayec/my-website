@@ -21,26 +21,69 @@ This guide explains how to configure Cloudflare Tunnels, DNS, WebSockets, and Ac
 
 ---
 
-## Part 1: Configure Mosquitto WebSockets (On your Raspberry Pi)
+## Part 1: Configure Mosquitto WebSockets & Local Authentication (On your Raspberry Pi)
 
-Browsers cannot connect to raw TCP ports (like default `1883`). You must ensure Mosquitto is configured to accept WebSockets.
+Browsers cannot connect to raw TCP ports (like default `1883`). You must configure Mosquitto to accept WebSockets and handle local user authentication securely.
 
+### Step A: Configure WebSockets Listener
 1. SSH into your Raspberry Pi.
 2. Edit your Mosquitto configuration file:
    ```bash
    sudo nano /etc/mosquitto/conf.d/websockets.conf
    ```
-3. Add a WebSocket listener. Make sure it binds to all interfaces:
+3. Add a WebSocket listener on port `9001` and define the password file:
    ```ini
+   # WebSocket listener for web browser portal
    listener 9001
    protocol websockets
    allow_anonymous false
    password_file /etc/mosquitto/passwd
+
+   # Standard TCP listener (for physical local smart devices)
+   listener 1883
+   protocol mqtt
+   allow_anonymous false
+   password_file /etc/mosquitto/passwd
    ```
-4. Restart Mosquitto to apply:
+
+### Step B: Manage Mosquitto User Credentials
+If you haven't created a password file or want to set up credentials for the portal:
+1. Create a new password file and add the first user (replace `smartuser` with your username):
    ```bash
-   sudo systemctl restart mosquitto
+   sudo mosquitto_passwd -c /etc/mosquitto/passwd smartuser
    ```
+   *Note: The `-c` flag creates a new file. If the file already exists, omit `-c` to avoid overwriting existing users.*
+2. Add or update subsequent users:
+   ```bash
+   sudo mosquitto_passwd /etc/mosquitto/passwd another_user
+   ```
+
+### Step C: Test Local MQTT Connections
+To verify the broker is working locally on the Pi before exposing it to Cloudflare:
+1. Install Mosquitto command-line client tools on the Pi:
+   ```bash
+   sudo apt-get install mosquitto-clients
+   ```
+2. Open one terminal session to subscribe to your topics:
+   ```bash
+   mosquitto_sub -h localhost -p 1883 -t "smartniwas/#" -u "smartuser" -P "your_password"
+   ```
+3. Open another terminal session to publish a test message:
+   ```bash
+   mosquitto_pub -h localhost -p 1883 -t "smartniwas/test" -m "Local Test" -u "smartuser" -P "your_password"
+   ```
+4. Verify the message is printed in the subscribing terminal.
+
+### Step D: Restart Mosquitto and Enable Boot Persistence
+```bash
+sudo systemctl restart mosquitto
+sudo systemctl enable mosquitto
+```
+
+### Step E: Configure a Static Local IP for your Pi
+Ensure the Raspberry Pi has a persistent IP address on your home router. 
+* **Method 1 (Recommended)**: Log in to your home router's admin portal, find the Raspberry Pi in the DHCP clients list, and configure a **DHCP Reservation** so it is always assigned the same IP.
+* **Method 2 (Local config)**: If router reservation is not possible, configure a static IP on the Pi by editing `/etc/dhcpcd.conf` (or via `nmcli` depending on your OS version).
 
 ---
 
