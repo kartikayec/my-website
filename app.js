@@ -130,29 +130,44 @@ function saveDevices() {
 // 4. Modules Setup and Connection Logic
 function initializeModules() {
     // 1. MQTT Section Setup
-    const iotSection = document.getElementById('iot-section');
     if (settings.mqttHost) {
-        iotSection.classList.remove('hidden');
         setupMQTT();
     } else {
-        iotSection.classList.add('hidden');
         if (mqttClient) {
             mqttClient.end();
             mqttClient = null;
         }
+        renderIoTPlaceholder();
     }
 
     // 2. CCTV Section Setup
-    const cctvSection = document.getElementById('cctv-section');
     if (settings.cctvEnabled && settings.nvrHost) {
-        cctvSection.classList.remove('hidden');
         setupCCTV();
     } else {
-        cctvSection.classList.add('hidden');
         cctvIntervals.forEach(clearInterval);
         cctvIntervals = [];
-        document.getElementById('cctv-grid').innerHTML = '';
+        renderCCTVPlaceholder();
     }
+}
+
+function renderIoTPlaceholder() {
+    const grid = document.getElementById('iot-grid');
+    grid.innerHTML = `
+        <div class="iot-placeholder-card">
+            <i class="fa-solid fa-circle-info"></i>
+            <p>Smart controls are not configured. Click the gear icon in the header to set up your MQTT broker connection.</p>
+        </div>
+    `;
+}
+
+function renderCCTVPlaceholder() {
+    const grid = document.getElementById('cctv-grid');
+    grid.innerHTML = `
+        <div class="cctv-placeholder-card">
+            <i class="fa-solid fa-video-slash"></i>
+            <p>Security monitoring is disabled. Enable CCTV in settings and input your NVR credentials to view camera feeds.</p>
+        </div>
+    `;
 }
 
 function setupMQTT() {
@@ -308,7 +323,7 @@ function setupCCTV() {
         let imageUrl = `${protocol}${credentials}${urlBase}/ISAPI/Streaming/channels/${channel}/picture`;
 
         card.innerHTML = `
-            <div class="cctv-feed-container">
+            <div class="cctv-feed-container" onclick="openCameraStream('${channel}')" style="cursor: pointer;">
                 <img class="cctv-feed-img" id="cam-${channel}" src="" alt="Camera ${channel}" onerror="handleCamError('${channel}')">
                 <div class="cctv-feed-placeholder" id="cam-place-${channel}">
                     <i class="fa-solid fa-circle-notch"></i>
@@ -321,7 +336,7 @@ function setupCCTV() {
             </div>
             <div class="cctv-meta">
                 <span class="cctv-name">Channel ${channel}</span>
-                <button class="cctv-refresh-btn" onclick="refreshCamera('${channel}')" aria-label="Refresh Camera">
+                <button class="cctv-refresh-btn" onclick="refreshCamera('${channel}'); event.stopPropagation();" aria-label="Refresh Camera">
                     <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
             </div>
@@ -372,6 +387,17 @@ window.refreshCamera = function(channel) {
         let imageUrl = `${protocol}${credentials}${urlBase}/ISAPI/Streaming/channels/${channel}/picture`;
         img.src = `${imageUrl}?t=${Date.now()}`;
     }
+}
+
+window.openCameraStream = function(channel) {
+    let urlBase = settings.nvrHost.replace('https://', '').replace('http://', '');
+    let credentials = '';
+    if (settings.nvrUser && settings.nvrPass) {
+        credentials = `${encodeURIComponent(settings.nvrUser)}:${encodeURIComponent(settings.nvrPass)}@`;
+    }
+    let protocol = settings.nvrHost.startsWith('https') ? 'https://' : 'http://';
+    let imageUrl = `${protocol}${credentials}${urlBase}/ISAPI/Streaming/channels/${channel}/picture`;
+    window.open(imageUrl, '_blank');
 }
 
 // 5. Device Manager Inventory CRUD
