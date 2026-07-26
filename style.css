@@ -830,3 +830,266 @@ input:checked + .slider:before {
 .cctv-refresh-btn:hover {
     color: var(--accent);
 }
+
+/* Settings Tabs */
+.settings-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.settings-tab-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.settings-tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-tab-btn.active {
+    color: white;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.tab-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Dropdown list */
+.modal-content select.form-select {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--card-border);
+    border-radius: 0.75rem;
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.modal-content select.form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.modal-content select.form-select option {
+    background: #1e1b4b;
+    color: var(--text-primary);
+}
+
+/* Device Config List styling */
+.device-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    border: 1px solid var(--card-border);
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(15, 23, 42, 0.2);
+}
+
+.device-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--card-border);
+    padding: 0.6rem 1rem;
+    border-radius: 0.75rem;
+}
+
+.device-item-info {
+    text-align: left;
+}
+
+.device-item-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.device-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.device-delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s;
+    font-size: 1rem;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.device-delete-btn:hover {
+    color: #f87171;
+}
+
+.add-device-section {
+    border-top: 1px solid var(--card-border);
+    padding-top: 1.25rem;
+    margin-top: 0.5rem;
+    text-align: left;
+}
+
+.add-device-section h5 {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-sm {
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 0.5rem;
+}
+
+/* Discovery Tab CSS */
+.discovery-tip {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.25rem;
+    text-align: left;
+}
+
+.discovery-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1.25rem;
+}
+
+.discovery-controls .inline-field {
+    flex-grow: 1;
+    margin-bottom: 0;
+    text-align: left;
+}
+
+.discovery-banner {
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    border: 1px solid;
+    transition: all 0.3s ease;
+}
+
+.discovery-banner.status-idle {
+    background: rgba(148, 163, 184, 0.08);
+    color: var(--text-secondary);
+    border-color: rgba(148, 163, 184, 0.15);
+}
+
+.discovery-banner.status-scanning {
+    background: rgba(129, 140, 248, 0.12);
+    color: var(--accent);
+    border-color: rgba(129, 140, 248, 0.3);
+    animation: scannerPulse 1.5s infinite alternate;
+}
+
+@keyframes scannerPulse {
+    from {
+        box-shadow: 0 0 5px rgba(129, 140, 248, 0.1);
+        border-color: rgba(129, 140, 248, 0.2);
+    }
+    to {
+        box-shadow: 0 0 15px rgba(129, 140, 248, 0.3);
+        border-color: rgba(129, 140, 248, 0.6);
+    }
+}
+
+.discovery-results-header {
+    font-size: 0.85rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.discovery-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    border: 1px solid var(--card-border);
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(15, 23, 42, 0.2);
+}
+
+.discovery-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--card-border);
+    padding: 0.6rem 0.85rem;
+    border-radius: 0.75rem;
+    gap: 1rem;
+}
+
+.discovery-item-path {
+    font-size: 0.8rem;
+    font-family: monospace;
+    color: var(--text-primary);
+    word-break: break-all;
+    flex-grow: 1;
+}
+
+.discovery-item-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.btn-xs {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 0.35rem;
+}
+
+.discovery-empty-state {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    padding: 2rem 1rem;
+    text-align: center;
+    border: 1px dashed var(--card-border);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.1);
+}

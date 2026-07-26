@@ -75,17 +75,23 @@ let settings = JSON.parse(localStorage.getItem('smartniwasSettings')) || {
 let mqttClient = null;
 let cctvIntervals = [];
 
-// MQTT UI State definition (Default configuration for topics)
-const iotDevices = {
+// Device Inventory Defaults
+const defaultDevices = {
     switches: [
         { id: "living-light", name: "Living Room Light", topic: "smartniwas/switch/livingroom_light", state: "OFF" },
-        { id: "gate-lock", name: "Main Gate Lock", topic: "smartniwas/switch/gate_lock", state: "ON" }
+        { id: "gate-lock", name: "Main Gate Lock", topic: "smartniwas/switch/gate_lock", state: "OFF" }
     ],
     sensors: [
         { id: "home-temp", name: "Temperature", topic: "smartniwas/sensor/temperature", value: "--", unit: "°C", icon: "fa-thermometer-half" },
         { id: "home-hum", name: "Humidity", topic: "smartniwas/sensor/humidity", value: "--", unit: "%", icon: "fa-droplet" }
     ]
 };
+
+let iotDevices = JSON.parse(localStorage.getItem('smartniwasDevices')) || defaultDevices;
+
+// Topic discovery state
+let discoveryActive = false;
+let discoveredTopics = [];
 
 // Render Notice Board Notes
 function saveNotes() {
@@ -115,6 +121,10 @@ window.toggleStatus = function(index) {
     const current = statuses.indexOf(members[index].status);
     members[index].status = statuses[(current + 1) % statuses.length];
     renderDirectory();
+}
+
+function saveDevices() {
+    localStorage.setItem('smartniwasDevices', JSON.stringify(iotDevices));
 }
 
 // 4. Modules Setup and Connection Logic
@@ -165,6 +175,7 @@ function setupMQTT() {
 
         mqttClient.on('connect', () => {
             console.log("Connected to MQTT Broker successfully!");
+            
             // Subscribe to all switch state and sensor topics
             iotDevices.switches.forEach(sw => {
                 mqttClient.subscribe(sw.topic);
@@ -172,13 +183,29 @@ function setupMQTT() {
             iotDevices.sensors.forEach(sen => {
                 mqttClient.subscribe(sen.topic);
             });
+
+            // If discovery is active, subscribe to discovery wildcard
+            if (discoveryActive) {
+                const wildcard = document.getElementById('discovery-wildcard').value.trim() || '#';
+                mqttClient.subscribe(wildcard);
+                updateDiscoveryBanner("Scanning...", "status-scanning");
+            }
         });
 
         mqttClient.on('message', (topic, message) => {
             const payload = message.toString();
-            console.log(`MQTT [${topic}] -> ${payload}`);
 
-            // Handle Switch updates
+            // 1. Discovery Mode handler
+            if (discoveryActive) {
+                const isConfigured = iotDevices.switches.some(s => s.topic === topic) || 
+                                     iotDevices.sensors.some(s => s.topic === topic);
+                if (!isConfigured && !discoveredTopics.includes(topic)) {
+                    discoveredTopics.push(topic);
+                    renderDiscoveryResults();
+                }
+            }
+
+            // 2. Device Update Handlers
             const sw = iotDevices.switches.find(s => s.topic === topic);
             if (sw) {
                 sw.state = payload;
@@ -188,7 +215,6 @@ function setupMQTT() {
                 if (statusLabel) statusLabel.innerText = payload;
             }
 
-            // Handle Sensor updates
             const sen = iotDevices.sensors.find(s => s.topic === topic);
             if (sen) {
                 sen.value = payload;
@@ -210,14 +236,19 @@ function renderIoTGrid() {
     const grid = document.getElementById('iot-grid');
     grid.innerHTML = '';
 
+    if (iotDevices.sensors.length === 0 && iotDevices.switches.length === 0) {
+        grid.innerHTML = '<div style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; width: 100%; padding: 2rem;">No devices configured. Click the gear icon in the header to add devices.</div>';
+        return;
+    }
+
     // Render Sensors
     iotDevices.sensors.forEach(sen => {
         const card = document.createElement('div');
         card.className = 'sensor-card';
         card.innerHTML = `
-            <div class="sensor-icon"><i class="fa-solid ${sen.icon}"></i></div>
+            <div class="sensor-icon"><i class="fa-solid ${sen.icon || 'fa-microchip'}"></i></div>
             <div class="sensor-details">
-                <div class="sensor-value" id="val-${sen.id}">${sen.value}${sen.unit}</div>
+                <div class="sensor-value" id="val-${sen.id}">${sen.value}${sen.unit || ''}</div>
                 <div class="sensor-label">${sen.name}</div>
             </div>
         `;
@@ -268,7 +299,6 @@ function setupCCTV() {
         const card = document.createElement('div');
         card.className = 'cctv-card';
         
-        // Clean URL structures
         let urlBase = settings.nvrHost.replace('https://', '').replace('http://', '');
         let credentials = '';
         if (settings.nvrUser && settings.nvrPass) {
@@ -301,9 +331,8 @@ function setupCCTV() {
         const img = card.querySelector(`#cam-${channel}`);
         const placeholder = card.querySelector(`#cam-place-${channel}`);
         
-        // Handle image loaded event to hide loader spinner
         img.onload = () => {
-            placeholder.classList.add('hidden');
+            if (placeholder) placeholder.classList.add('hidden');
         };
 
         const updateImage = () => {
@@ -345,7 +374,113 @@ window.refreshCamera = function(channel) {
     }
 }
 
-// 5. Time Clock
+// 5. Device Manager Inventory CRUD
+function renderDeviceList() {
+    const list = document.getElementById('device-list');
+    list.innerHTML = '';
+
+    if (iotDevices.switches.length === 0 && iotDevices.sensors.length === 0) {
+        list.innerHTML = '<div class="discovery-empty-state" style="padding: 1rem;">No custom devices configured yet. Use the form below or the Discovery tool to add devices.</div>';
+        return;
+    }
+
+    iotDevices.sensors.forEach(sen => {
+        const item = document.createElement('div');
+        item.className = 'device-item';
+        item.innerHTML = `
+            <div class="device-item-info">
+                <span class="device-item-name">${sen.name} <span style="font-size:0.75rem; font-weight:normal; opacity:0.75;">(Sensor)</span></span>
+                <div class="device-item-meta">Topic: ${sen.topic}</div>
+            </div>
+            <button type="button" class="device-delete-btn" onclick="deleteDevice('sensor', '${sen.id}')" aria-label="Delete sensor">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        `;
+        list.appendChild(item);
+    });
+
+    iotDevices.switches.forEach(sw => {
+        const item = document.createElement('div');
+        item.className = 'device-item';
+        item.innerHTML = `
+            <div class="device-item-info">
+                <span class="device-item-name">${sw.name} <span style="font-size:0.75rem; font-weight:normal; opacity:0.75;">(Switch)</span></span>
+                <div class="device-item-meta">Topic: ${sw.topic}</div>
+            </div>
+            <button type="button" class="device-delete-btn" onclick="deleteDevice('switch', '${sw.id}')" aria-label="Delete switch">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        `;
+        list.appendChild(item);
+    });
+}
+
+window.deleteDevice = function(type, id) {
+    if (type === 'switch') {
+        iotDevices.switches = iotDevices.switches.filter(d => d.id !== id);
+    } else {
+        iotDevices.sensors = iotDevices.sensors.filter(d => d.id !== id);
+    }
+    saveDevices();
+    renderDeviceList();
+    initializeModules();
+}
+
+// 6. Topic Discovery Renderer
+function updateDiscoveryBanner(text, className) {
+    const banner = document.getElementById('discovery-status-banner');
+    if (banner) {
+        banner.innerText = text;
+        banner.className = `discovery-banner ${className}`;
+    }
+}
+
+function renderDiscoveryResults() {
+    const results = document.getElementById('discovery-results');
+    results.innerHTML = '';
+
+    if (discoveredTopics.length === 0) {
+        results.innerHTML = '<div class="discovery-empty-state">No paths scanned yet. Start scanning to capture traffic.</div>';
+        return;
+    }
+
+    discoveredTopics.forEach(topic => {
+        const item = document.createElement('div');
+        item.className = 'discovery-item';
+        item.innerHTML = `
+            <div class="discovery-item-path">${topic}</div>
+            <div class="discovery-item-actions">
+                <button type="button" class="btn btn-primary btn-xs" onclick="quickAddDevice('switch', '${topic}')">
+                    + Switch
+                </button>
+                <button type="button" class="btn btn-primary btn-xs" onclick="quickAddDevice('sensor', '${topic}')">
+                    + Sensor
+                </button>
+            </div>
+        `;
+        results.appendChild(item);
+    });
+}
+
+window.quickAddDevice = function(type, topic) {
+    document.getElementById('new-dev-name').value = topic.split('/').pop().replace(/_/g, ' ');
+    document.getElementById('new-dev-type').value = type;
+    document.getElementById('new-dev-topic').value = topic;
+    
+    const sensorFieldsPanel = document.getElementById('sensor-fields');
+    if (type === 'sensor') {
+        sensorFieldsPanel.classList.remove('hidden');
+        document.getElementById('new-dev-unit').value = '';
+        document.getElementById('new-dev-icon').value = 'fa-microchip';
+    } else {
+        sensorFieldsPanel.classList.add('hidden');
+    }
+
+    document.querySelector('.settings-tab-btn[data-tab="devices"]').click();
+    document.getElementById('new-dev-name').focus();
+}
+
+// 7. Time Clock
 function updateClock() {
     const now = new Date();
     document.getElementById('live-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -358,13 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Initial Modules Load
     initializeModules();
-
-    // Auto-prompt settings if MQTT is not configured
-    if (!settings.mqttHost) {
-        setTimeout(showSettings, 600);
-    }
 
     // Modal declarations
     const noteModal = document.getElementById('note-modal');
@@ -409,6 +538,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('nvr-pass').value = settings.nvrPass;
         document.getElementById('nvr-channels').value = settings.nvrChannels;
 
+        // Reset to first tab "Connection"
+        document.querySelector('.settings-tab-btn[data-tab="connection"]').click();
+
         settingsModal.classList.add('active');
         settingsModal.setAttribute('aria-hidden', 'false');
     };
@@ -416,6 +548,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const hideSettings = () => {
         settingsModal.classList.remove('active');
         settingsModal.setAttribute('aria-hidden', 'true');
+        if (discoveryActive) {
+            stopDiscovery();
+        }
     };
 
     const showNoteModal = () => {
@@ -429,6 +564,11 @@ document.addEventListener('DOMContentLoaded', () => {
         noteModal.setAttribute('aria-hidden', 'true');
         noteForm.reset();
     };
+
+    // Auto-prompt settings if MQTT is not configured
+    if (!settings.mqttHost) {
+        setTimeout(showSettings, 600);
+    }
 
     // Bind Notice Board Events
     addNoteBtn.addEventListener('click', showNoteModal);
@@ -474,6 +614,120 @@ document.addEventListener('DOMContentLoaded', () => {
         
         initializeModules();
         hideSettings();
+    });
+
+    // Settings Tab Switchers
+    const tabButtons = document.querySelectorAll('.settings-tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    const footerActions = document.getElementById('settings-form-actions');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            tabPanels.forEach(p => p.classList.add('hidden'));
+            document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
+
+            if (targetTab === 'connection') {
+                footerActions.classList.remove('hidden');
+            } else {
+                footerActions.classList.add('hidden');
+            }
+
+            if (targetTab === 'devices') {
+                renderDeviceList();
+            }
+        });
+    });
+
+    // Add Device select dropdown type trigger
+    const newDevTypeSelect = document.getElementById('new-dev-type');
+    const sensorFieldsPanel = document.getElementById('sensor-fields');
+    newDevTypeSelect.addEventListener('change', () => {
+        if (newDevTypeSelect.value === 'sensor') {
+            sensorFieldsPanel.classList.remove('hidden');
+        } else {
+            sensorFieldsPanel.classList.add('hidden');
+        }
+    });
+
+    // Add Device Action
+    const addDeviceBtnAction = document.getElementById('add-device-btn-action');
+    addDeviceBtnAction.addEventListener('click', () => {
+        const name = document.getElementById('new-dev-name').value.trim();
+        const type = newDevTypeSelect.value;
+        const topic = document.getElementById('new-dev-topic').value.trim();
+
+        if (!name || !topic) {
+            alert('Please enter a display name and MQTT topic.');
+            return;
+        }
+
+        const id = 'dev-' + Date.now();
+
+        if (type === 'switch') {
+            iotDevices.switches.push({ id, name, topic, state: 'OFF' });
+        } else {
+            const unit = document.getElementById('new-dev-unit').value.trim();
+            const icon = document.getElementById('new-dev-icon').value.trim() || 'fa-microchip';
+            iotDevices.sensors.push({ id, name, topic, value: '--', unit, icon });
+        }
+
+        saveDevices();
+        renderDeviceList();
+        initializeModules();
+
+        // Reset Add Device form
+        document.getElementById('new-dev-name').value = '';
+        document.getElementById('new-dev-topic').value = '';
+        document.getElementById('new-dev-unit').value = '';
+        document.getElementById('new-dev-icon').value = '';
+    });
+
+    // Discovery Controls Setup
+    const discoveryToggleBtn = document.getElementById('discovery-toggle-btn');
+    
+    function startDiscovery() {
+        if (!mqttClient || !mqttClient.connected) {
+            alert("No active broker connection. Please save a valid Broker URL first and verify connection.");
+            return;
+        }
+        discoveryActive = true;
+        discoveredTopics = [];
+        renderDiscoveryResults();
+        
+        const wildcard = document.getElementById('discovery-wildcard').value.trim() || '#';
+        console.log("Discovery scanner started on wildcard:", wildcard);
+        mqttClient.subscribe(wildcard);
+
+        discoveryToggleBtn.innerHTML = '<i class="fa-solid fa-square"></i> Stop Scanning';
+        discoveryToggleBtn.style.background = '#ef4444';
+        updateDiscoveryBanner(`SCANNING... Listening to topic wildcard: "${wildcard}"`, "status-scanning");
+    }
+
+    function stopDiscovery() {
+        discoveryActive = false;
+        
+        if (mqttClient && mqttClient.connected) {
+            const wildcard = document.getElementById('discovery-wildcard').value.trim() || '#';
+            mqttClient.unsubscribe(wildcard);
+        }
+
+        console.log("Discovery scanner stopped.");
+        discoveryToggleBtn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Start Scanning';
+        discoveryToggleBtn.style.background = '';
+        updateDiscoveryBanner("Scanner is currently IDLE.", "status-idle");
+    }
+
+    discoveryToggleBtn.addEventListener('click', () => {
+        if (!discoveryActive) {
+            startDiscovery();
+        } else {
+            stopDiscovery();
+        }
     });
 
     // Close on overlay clicks
