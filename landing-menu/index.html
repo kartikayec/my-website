@@ -3,253 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartNiwas Portal Hub</title>
+    <title>SmartNiwas - Coming Soon..</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --font-heading: 'Outfit', sans-serif;
-            --bg-base: #090d16;
-            --bg-surface: rgba(17, 24, 39, 0.6);
-            --bg-surface-hover: rgba(31, 41, 55, 0.7);
-            --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.2);
-            --secondary: #8b5cf6;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-
         body {
-            font-family: var(--font-heading);
-            background-color: var(--bg-base);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 50%),
-                radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
-            background-attachment: fixed;
-            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow-x: hidden;
+            padding: 1.5rem;
+            overflow: hidden;
+            position: relative;
         }
-
-        .glass-bg {
+        .glow-1 {
             position: absolute;
-            top: 20%;
-            left: 10%;
-            width: 250px;
-            height: 250px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            top: -20%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(15, 23, 42, 0) 70%);
             border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.25;
             pointer-events: none;
-            z-index: 0;
         }
-
-        .hub-container {
-            max-width: 850px;
-            width: 90%;
-            padding: 3rem;
-            background: var(--bg-surface);
+        .glow-2 {
+            position: absolute;
+            bottom: -20%;
+            right: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, rgba(15, 23, 42, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-lg);
-            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7),
-                        0 1px 1px rgba(255, 255, 255, 0.05) inset;
-            text-align: center;
-            position: relative;
-            z-index: 10;
-        }
-
-        .hub-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border-top-left-radius: var(--radius-lg);
-            border-top-right-radius: var(--radius-lg);
-        }
-
-        .hub-header {
-            margin-bottom: 3.5rem;
-        }
-
-        .hub-title {
-            font-size: 3.5rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-
-        .hub-subtitle {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            font-weight: 300;
-        }
-
-        .grid-menu {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.75rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .grid-menu {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .menu-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: var(--radius-md);
-            padding: 2.25rem 1.5rem;
-            text-decoration: none;
-            color: var(--text-primary);
-            transition: var(--transition-smooth);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.25rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .menu-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
+            border-radius: 1.5rem;
+            padding: 3.5rem 2.5rem;
+            max-width: 540px;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            opacity: 0;
-            transition: var(--transition-smooth);
-            z-index: 1;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            z-index: 10;
         }
-
-        .menu-card:hover::before {
-            opacity: 0.08;
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            color: #fff;
         }
-
-        .menu-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(99, 102, 241, 0.35);
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.1);
+        .logo span {
+            color: #6366f1;
         }
-
-        .card-icon {
+        .badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #818cf8;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        h1 {
             font-size: 2.5rem;
-            background: linear-gradient(135deg, #a5b4fc, #c084fc);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            z-index: 10;
         }
-
-        .menu-card:hover .card-icon {
-            transform: scale(1.1);
-            transition: var(--transition-smooth);
+        p {
+            font-size: 1.05rem;
+            color: #94a3b8;
+            line-height: 1.6;
         }
-
-        .card-title {
-            font-size: 1.35rem;
-            font-weight: 600;
-            z-index: 10;
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
         }
-
-        .card-desc {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            line-height: 1.4;
-            z-index: 10;
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #6366f1;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite ease-in-out;
         }
-
-        .hub-footer {
-            margin-top: 3rem;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        #live-clock {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
         }
     </style>
 </head>
 <body>
-    <div class="glass-bg"></div>
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
 
-    <div class="hub-container">
-        <header class="hub-header">
-            <h1 class="hub-title">smart<strong style="color: var(--primary);">niwas</strong></h1>
-            <p class="hub-subtitle">Household Management & Automation Hub</p>
-        </header>
-
-        <div class="grid-menu">
-            <a href="https://portal.smartniwas.com" class="menu-card">
-                <i class="fa-solid fa-house-chimney-window card-icon"></i>
-                <h2 class="card-title">Member Portal</h2>
-                <p class="card-desc">Interactive Notice Board, Member Directory, IoT Smart Controls, and CCTV monitors.</p>
-            </a>
-
-            <a href="https://cashflow.smartniwas.com" class="menu-card">
-                <i class="fa-solid fa-chart-line card-icon"></i>
-                <h2 class="card-title">Cash Flow & Bills</h2>
-                <p class="card-desc">Track payment commitments, project monthly cash flow, and manage recurring payment reminders.</p>
-            </a>
-
-            <a href="https://tickets.smartniwas.com" class="menu-card">
-                <i class="fa-solid fa-ticket-simple card-icon"></i>
-                <h2 class="card-title">Support Tickets</h2>
-                <p class="card-desc">RT-style ticket logging system for home issues, maintenance requests, and history threads.</p>
-            </a>
+    <div class="card">
+        <div class="logo">smart<span>niwas</span></div>
+        <div class="badge">Portal Gateway</div>
+        <h1>Coming Soon..</h1>
+        <p>Our platform services are currently undergoing maintenance. Please check back later.</p>
+        <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
         </div>
-
-        <footer class="hub-footer">
-            <div id="live-clock">Loading Clock...</div>
-            <p>&copy; 2026 smartniwas. All systems operational.</p>
-        </footer>
     </div>
-
-    <script>
-        function updateClock() {
-            const clockEl = document.getElementById('live-clock');
-            const now = new Date();
-            clockEl.textContent = now.toLocaleDateString(undefined, {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }) + ' | ' + now.toLocaleTimeString(undefined, {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
 </body>
 </html>

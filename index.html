@@ -3,369 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartNiwas Portal</title>
-    <meta name="description" content="SmartNiwas Portal - A unified glassmorphic home portal featuring a member directory, interactive notice board, and quick dashboard access.">
-    <meta name="theme-color" content="#0f172a">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://smartniwas.com/">
-    <meta property="og:title" content="SmartNiwas Portal">
-    <meta property="og:description" content="A unified home portal featuring a member directory, interactive notice board, and quick dashboard access.">
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://smartniwas.com/">
-    <meta property="twitter:title" content="SmartNiwas Portal">
-    <meta property="twitter:description" content="A unified home portal featuring a member directory, interactive notice board, and quick dashboard access.">
-
-    <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts & Icons -->
+    <title>SmartNiwas - Coming Soon..</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- MQTT Client Library -->
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+        .glow-1 {
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(15, 23, 42, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .glow-2 {
+            position: absolute;
+            bottom: -20%;
+            right: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, rgba(15, 23, 42, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 1.5rem;
+            padding: 3.5rem 2.5rem;
+            max-width: 540px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            color: #fff;
+        }
+        .logo span {
+            color: #6366f1;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #818cf8;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p {
+            font-size: 1.05rem;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #6366f1;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+    </style>
 </head>
 <body>
-    <div class="glass-bg"></div>
-    <div class="glass-bg secondary-bg"></div>
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
 
-    <main class="portal-container">
-        <!-- Header -->
-        <header class="header">
-            <h1 class="logo">
-                <i class="fa-solid fa-house-chimney-window"></i>
-                <span>smart<strong>niwas</strong></span>
-            </h1>
-            <div class="header-controls">
-                <button id="lock-portal-btn" class="settings-btn" aria-label="Lock Portal Session" title="Lock Session">
-                    <i class="fa-solid fa-lock"></i>
-                </button>
-                <button id="open-settings-btn" class="settings-btn" aria-label="Open Settings" title="Settings">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
-                <div id="live-clock" class="live-clock">Loading time...</div>
-            </div>
-        </header>
-
-        <!-- Mandatory Security Passcode Enforcement Banner -->
-        <div id="security-enforcement-banner" class="security-banner hidden">
-            <div class="security-banner-content">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span><strong>Security Enforcement Policy:</strong> You are currently using the default master PIN (<code>1234</code>). Please change your passcode under Portal Settings.</span>
-            </div>
-            <button id="enforce-change-pin-btn" class="btn btn-warning btn-xs">
-                <i class="fa-solid fa-key"></i> Change PIN Now
-            </button>
-        </div>
-
-        <!-- Main Grid -->
-        <div class="portal-grid">
-            
-            <!-- Column 1: Directory & IoT -->
-            <div class="left-column">
-                <section class="grid-section directory-section">
-                    <h2><i class="fa-solid fa-users"></i> Member Directory</h2>
-                    <div class="member-grid" id="member-grid">
-                        <!-- Cards will be dynamically rendered by app.js -->
-                    </div>
-                </section>
-                
-                <!-- IoT Section -->
-                <section id="iot-section" class="grid-section iot-section">
-                    <h2><i class="fa-solid fa-microchip"></i> Smart Controls</h2>
-                    <div class="iot-grid" id="iot-grid">
-                        <!-- Injected MQTT switches/sensors or placeholder -->
-                    </div>
-                </section>
-            </div>
-
-            <!-- Column 2: Notes, CCTV & Cashflow Tasks -->
-            <div class="right-column">
-                <!-- CCTV Section -->
-                <section id="cctv-section" class="grid-section cctv-section">
-                    <h2><i class="fa-solid fa-video"></i> Security Monitor</h2>
-                    <div class="cctv-grid" id="cctv-grid">
-                        <!-- Injected NVR camera monitors or placeholder -->
-                    </div>
-                </section>
-
-                <!-- Indicative Cashflow & Contractual Payments Section -->
-                <section id="cashflow-section" class="grid-section cashflow-section">
-                    <div class="cashflow-section-header">
-                        <h2><i class="fa-solid fa-file-invoice-dollar"></i> Indicative Cashflow Tasks</h2>
-                        <div class="cashflow-summary-badge">
-                            <span id="cashflow-pending-count" class="badge">0 Pending</span>
-                            <span id="cashflow-total-outlay" class="outlay-sum">₹0</span>
-                        </div>
-                    </div>
-                    <div class="cashflow-grid" id="cashflow-grid">
-                        <!-- Injected dynamically by cashflow.js -->
-                    </div>
-                </section>
-
-                <!-- Sticky Notes Board -->
-                <section class="grid-section notes-section">
-                    <div class="notes-header">
-                        <h2><i class="fa-solid fa-note-sticky"></i> Shared Notice Board</h2>
-                        <button id="add-note-btn" class="btn"><i class="fa-solid fa-plus"></i> Add Note</button>
-                    </div>
-                    <div class="notes-grid" id="notes-grid">
-                        <!-- Notes will be loaded here -->
-                    </div>
-                </section>
-            </div>
-
-        </div>
-    </main>
-
-    <!-- Glassmorphic Add Note Modal -->
-    <div id="note-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
-        <div class="modal-content">
-            <button id="close-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
-            <h2 id="modal-title"><i class="fa-solid fa-pen-nib"></i> Add New Notice</h2>
-            <form id="note-form">
-                <div class="form-group">
-                    <label for="note-text" class="form-label">Write your message:</label>
-                    <textarea id="note-text" placeholder="Write something on the board..." required maxlength="200" rows="4"></textarea>
-                </div>
-                <div class="form-actions">
-                    <button type="button" id="cancel-note-btn" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Note</button>
-                </div>
-            </form>
+    <div class="card">
+        <div class="logo">smart<span>niwas</span></div>
+        <div class="badge">System Maintenance</div>
+        <h1>Coming Soon..</h1>
+        <p>Our platform and services are currently undergoing upgrades and maintenance. Please check back later.</p>
+        <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
         </div>
     </div>
-
-    <!-- Glassmorphic Settings Modal -->
-    <div id="settings-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="settings-title">
-        <div class="modal-content settings-content">
-            <button id="close-settings-btn" class="modal-close" aria-label="Close settings">&times;</button>
-            <h2 id="settings-title"><i class="fa-solid fa-sliders"></i> Portal Settings</h2>
-            
-            <div class="settings-tabs">
-                <button type="button" class="settings-tab-btn active" data-tab="security"><i class="fa-solid fa-shield-halved"></i> Security</button>
-                <button type="button" class="settings-tab-btn" data-tab="connection"><i class="fa-solid fa-network-wired"></i> Connection</button>
-                <button type="button" class="settings-tab-btn" data-tab="devices"><i class="fa-solid fa-microchip"></i> Devices</button>
-                <button type="button" class="settings-tab-btn" data-tab="discovery"><i class="fa-solid fa-satellite-dish"></i> Discovery</button>
-            </div>
-
-            <div class="settings-scroll-container">
-                
-                <!-- Tab 1: Security Tab -->
-                <div id="tab-security" class="tab-panel hidden">
-                    <div class="passcode-status-card">
-                        <div class="status-info">
-                            <i class="fa-solid fa-shield-halved" style="color: var(--accent); font-size: 1.1rem;"></i>
-                            <span>Master Passcode:</span>
-                            <span id="pass-status-badge" class="status-badge status-online">Protected</span>
-                        </div>
-                        <button type="button" id="toggle-change-pass-btn" class="btn btn-secondary btn-sm">
-                            <i class="fa-solid fa-pen"></i> Change Passcode
-                        </button>
-                    </div>
-
-                    <form id="security-settings-form">
-                        <div id="security-fields-wrapper" class="hidden" style="margin-top: 1rem;">
-                            <div class="settings-group-title">Update Master Passcode</div>
-                            <div class="form-row">
-                                <div class="form-group half-width">
-                                    <label for="portal-passcode-setting" class="form-label">New Master Passcode / PIN:</label>
-                                    <input type="password" id="portal-passcode-setting" placeholder="Min 10 characters">
-                                </div>
-                                <div class="form-group half-width">
-                                    <label for="portal-passcode-confirm" class="form-label">Confirm New Passcode:</label>
-                                    <input type="password" id="portal-passcode-confirm" placeholder="Re-enter PIN">
-                                </div>
-                            </div>
-                            <div class="policy-note">
-                                <i class="fa-solid fa-shield-halved"></i> <strong>Enforcement Policy:</strong> Passcode must be at least 10 characters long and cannot match default/simple PINs (e.g. <code>1234</code>, <code>0000000000</code>).
-                            </div>
-                            <div id="security-status-msg" class="feedback-msg hidden"></div>
-                            <div class="form-actions">
-                                <button type="submit" id="save-security-btn" class="btn btn-primary">
-                                    <i class="fa-solid fa-key"></i> Save New Passcode
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Tab 2: Connection Tab -->
-                <div id="tab-connection" class="tab-panel hidden">
-                    <form id="connection-settings-form">
-                        <!-- MQTT Broker Section -->
-                        <div class="settings-group-title">MQTT IoT Broker Settings</div>
-                        <div class="form-group">
-                            <label for="mqtt-host" class="form-label">Broker WebSocket URL:</label>
-                            <input type="url" id="mqtt-host" placeholder="wss://mqtt.smartniwas.com">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group half-width">
-                                <label for="mqtt-user" class="form-label">Username:</label>
-                                <input type="text" id="mqtt-user" placeholder="mqtt_user">
-                            </div>
-                            <div class="form-group half-width">
-                                <label for="mqtt-pass" class="form-label">Password:</label>
-                                <input type="password" id="mqtt-pass" placeholder="••••••••">
-                            </div>
-                        </div>
-
-                        <!-- CCTV Section Toggle -->
-                        <div class="settings-group-title divider">CCTV Camera Settings</div>
-                        <div class="form-group checkbox-group">
-                            <input type="checkbox" id="cctv-enabled">
-                            <label for="cctv-enabled" class="checkbox-label">Enable CCTV Monitoring Module</label>
-                        </div>
-                        
-                        <div id="cctv-settings-fields" class="hidden">
-                            <div class="form-group">
-                                <label for="nvr-host" class="form-label">NVR Proxy URL:</label>
-                                <input type="url" id="nvr-host" placeholder="https://cctv.smartniwas.com">
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group half-width">
-                                    <label for="nvr-user" class="form-label">NVR Username:</label>
-                                    <input type="text" id="nvr-user" placeholder="admin">
-                                </div>
-                                <div class="form-group half-width">
-                                    <label for="nvr-pass" class="form-label">NVR Password:</label>
-                                    <input type="password" id="nvr-pass" placeholder="••••••••">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="nvr-channels" class="form-label">Camera Channels (comma-separated):</label>
-                                <input type="text" id="nvr-channels" placeholder="101,201,301">
-                            </div>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" id="save-connection-btn" class="btn btn-primary">
-                                <i class="fa-solid fa-floppy-disk"></i> Save Connection Settings
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                    <!-- Devices Tab -->
-                    <div id="tab-devices" class="tab-panel hidden">
-                        <div class="settings-group-title">Configure Smart Devices</div>
-                        
-                        <!-- List of current devices -->
-                        <div id="device-list" class="device-list-container">
-                            <!-- Injected dynamically -->
-                        </div>
-
-                        <!-- Add Device Form -->
-                        <div class="add-device-section">
-                            <h5>Add New Device</h5>
-                            <div class="form-row">
-                                <div class="form-group half-width">
-                                    <label for="new-dev-name" class="form-label">Display Name:</label>
-                                    <input type="text" id="new-dev-name" placeholder="e.g. Living Light">
-                                </div>
-                                <div class="form-group half-width">
-                                    <label for="new-dev-type" class="form-label">Device Type:</label>
-                                    <select id="new-dev-type" class="form-select">
-                                        <option value="switch">Switch (Read/Write)</option>
-                                        <option value="sensor">Sensor (Read-only)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <!-- Switch-specific fields -->
-                            <div id="switch-fields">
-                                <div class="form-group">
-                                    <label for="new-dev-cmd-topic" class="form-label">Command Topic (publish):</label>
-                                    <input type="text" id="new-dev-cmd-topic" placeholder="e.g. cmnd/switch1/POWER">
-                                </div>
-                                <div class="form-group">
-                                    <label for="new-dev-stat-topic" class="form-label">State Topic (subscribe):</label>
-                                    <input type="text" id="new-dev-stat-topic" placeholder="e.g. stat/switch1/POWER">
-                                </div>
-                            </div>
-                            
-                            <!-- Sensor-specific fields -->
-                            <div id="sensor-fields" class="hidden">
-                                <div class="form-group">
-                                    <label for="new-dev-topic" class="form-label">Sensor Topic (subscribe):</label>
-                                    <input type="text" id="new-dev-topic" placeholder="e.g. smartniwas/sensor/temperature">
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group half-width">
-                                        <label for="new-dev-unit" class="form-label">Unit of Measure:</label>
-                                        <input type="text" id="new-dev-unit" placeholder="e.g. °C, %, W">
-                                    </div>
-                                    <div class="form-group half-width">
-                                        <label for="new-dev-icon" class="form-label">FontAwesome Icon:</label>
-                                        <input type="text" id="new-dev-icon" placeholder="e.g. fa-droplet, fa-bolt">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button type="button" id="add-device-btn-action" class="btn btn-primary btn-sm">
-                                <i class="fa-solid fa-plus"></i> Add Device
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Discovery Tab -->
-                    <div id="tab-discovery" class="tab-panel hidden">
-                        <div class="settings-group-title">MQTT Path Auto-Discovery</div>
-                        <p class="discovery-tip">Scan the network for active MQTT traffic to easily register new devices.</p>
-                        
-                        <div class="discovery-controls">
-                            <div class="form-group inline-field">
-                                <label for="discovery-wildcard" class="form-label">Discovery Wildcard:</label>
-                                <input type="text" id="discovery-wildcard" value="#" placeholder="#">
-                            </div>
-                            <button type="button" id="discovery-toggle-btn" class="btn btn-primary">
-                                <i class="fa-solid fa-satellite-dish"></i> Start Scanning
-                            </button>
-                        </div>
-
-                        <div id="discovery-status-banner" class="discovery-banner status-idle">
-                            Scanner is currently IDLE.
-                        </div>
-
-                        <div class="discovery-results-header">Captured MQTT Paths</div>
-                        <div id="discovery-results" class="discovery-results-list">
-                            <!-- Injected dynamically -->
-                            <div class="discovery-empty-state">No paths scanned yet. Start scanning to capture traffic.</div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Glassmorphic Authentication Gateway Modal -->
-    <div id="auth-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="auth-modal-title">
-        <div class="modal-content auth-modal-content">
-            <div class="auth-icon-wrapper">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <h2 id="auth-modal-title"><i class="fa-solid fa-house-lock"></i> SmartNiwas Verification</h2>
-            <p class="auth-subtitle">Enter your household passcode / master PIN to unlock the member portal.</p>
-            
-            <form id="auth-form">
-                <div id="auth-error-banner" class="auth-error-banner hidden">
-                    <i class="fa-solid fa-circle-exclamation"></i> Invalid Passcode. Please try again.
-                </div>
-                
-                <div class="form-group">
-                    <label for="portal-passcode-input" class="form-label">Master PIN / Passcode:</label>
-                    <input type="password" id="portal-passcode-input" placeholder="••••••••" required autocomplete="current-password">
-                </div>
-                
-                <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">
-                    <i class="fa-solid fa-key"></i> Unlock Portal
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <script type="module" src="js/app.js"></script>
 </body>
 </html>
