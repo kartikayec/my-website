@@ -131,18 +131,18 @@
             <h2 id="settings-title"><i class="fa-solid fa-sliders"></i> Portal Settings</h2>
             
             <div class="settings-tabs">
-                <button type="button" class="settings-tab-btn active" data-tab="connection">Connection</button>
-                <button type="button" class="settings-tab-btn" data-tab="devices">Devices</button>
-                <button type="button" class="settings-tab-btn" data-tab="discovery">Discovery</button>
+                <button type="button" class="settings-tab-btn active" data-tab="security"><i class="fa-solid fa-shield-halved"></i> Security</button>
+                <button type="button" class="settings-tab-btn" data-tab="connection"><i class="fa-solid fa-network-wired"></i> Connection</button>
+                <button type="button" class="settings-tab-btn" data-tab="devices"><i class="fa-solid fa-microchip"></i> Devices</button>
+                <button type="button" class="settings-tab-btn" data-tab="discovery"><i class="fa-solid fa-satellite-dish"></i> Discovery</button>
             </div>
 
-            <form id="settings-form">
-                <div class="settings-scroll-container">
-                    
-                    <!-- Connection Tab -->
-                    <div id="tab-connection" class="tab-panel">
-                        <!-- Security Access Passcode -->
-                        <div class="settings-group-title">Portal Security Access & Policy</div>
+            <div class="settings-scroll-container">
+                
+                <!-- Tab 1: Security Tab -->
+                <div id="tab-security" class="tab-panel">
+                    <form id="security-settings-form">
+                        <div class="settings-group-title">Portal Master Passcode & Security Policy</div>
                         <div class="form-row">
                             <div class="form-group half-width">
                                 <label for="portal-passcode-setting" class="form-label">New Master Passcode / PIN:</label>
@@ -156,12 +156,22 @@
                         <div class="policy-note">
                             <i class="fa-solid fa-shield-halved"></i> <strong>Enforcement Policy:</strong> Passcode must be at least 10 characters long and cannot match default/simple PINs (e.g. <code>1234</code>, <code>0000000000</code>).
                         </div>
+                        <div class="form-actions">
+                            <button type="submit" id="save-security-btn" class="btn btn-primary">
+                                <i class="fa-solid fa-key"></i> Update Security Passcode
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
+                <!-- Tab 2: Connection Tab -->
+                <div id="tab-connection" class="tab-panel hidden">
+                    <form id="connection-settings-form">
                         <!-- MQTT Broker Section -->
-                        <div class="settings-group-title divider">MQTT IoT Broker Settings</div>
+                        <div class="settings-group-title">MQTT IoT Broker Settings</div>
                         <div class="form-group">
                             <label for="mqtt-host" class="form-label">Broker WebSocket URL:</label>
-                            <input type="url" id="mqtt-host" placeholder="wss://mqtt.smartniwas.com" required>
+                            <input type="url" id="mqtt-host" placeholder="wss://mqtt.smartniwas.com">
                         </div>
                         <div class="form-row">
                             <div class="form-group half-width">
@@ -201,7 +211,14 @@
                                 <input type="text" id="nvr-channels" placeholder="101,201,301">
                             </div>
                         </div>
-                    </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="save-connection-btn" class="btn btn-primary">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Connection Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
                     <!-- Devices Tab -->
                     <div id="tab-devices" class="tab-panel hidden">
@@ -291,13 +308,7 @@
                     </div>
 
                 </div>
-
-                <!-- Footer form actions (only visible / relevant for saving Connection config) -->
-                <div id="settings-form-actions" class="form-actions">
-                    <button type="button" id="cancel-settings-btn" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Connection</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 

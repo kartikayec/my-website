@@ -106,14 +106,14 @@ window.deleteNote = function(id) {
     }
 };
 
-// 3. Settings & Storage State
+// 3. Settings & Storage State (With Safe Default Pre-fills)
 let settings = JSON.parse(localStorage.getItem('smartniwasSettings')) || {
     portalPasscode: "1234",
-    mqttHost: "",
+    mqttHost: "wss://mqtt.smartniwas.com",
     mqttUser: "",
     mqttPass: "",
     cctvEnabled: false,
-    nvrHost: "",
+    nvrHost: "https://cctv.smartniwas.com",
     nvrUser: "",
     nvrPass: "",
     nvrChannels: "101,201"
@@ -121,6 +121,12 @@ let settings = JSON.parse(localStorage.getItem('smartniwasSettings')) || {
 
 if (!settings.portalPasscode) {
     settings.portalPasscode = "1234";
+}
+if (!settings.mqttHost) {
+    settings.mqttHost = "wss://mqtt.smartniwas.com";
+}
+if (!settings.nvrHost) {
+    settings.nvrHost = "https://cctv.smartniwas.com";
 }
 
 let mqttClient = null;
@@ -803,10 +809,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelNoteBtn = document.getElementById('cancel-note-btn');
 
     const settingsModal = document.getElementById('settings-modal');
-    const settingsForm = document.getElementById('settings-form');
     const openSettingsBtn = document.getElementById('open-settings-btn');
     const closeSettingsBtn = document.getElementById('close-settings-btn');
-    const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
 
     const cctvEnabledCheckbox = document.getElementById('cctv-enabled');
     const cctvSettingsFields = document.getElementById('cctv-settings-fields');
@@ -831,7 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (passcodeSetting) passcodeSetting.value = '';
         if (passcodeConfirm) passcodeConfirm.value = '';
-        if (mqttHostInput) mqttHostInput.value = settings.mqttHost;
+        if (mqttHostInput) mqttHostInput.value = settings.mqttHost || "wss://mqtt.smartniwas.com";
         if (mqttUserInput) mqttUserInput.value = settings.mqttUser;
         if (mqttPassInput) mqttPassInput.value = settings.mqttPass;
         
@@ -851,13 +855,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const nvrPassInput = document.getElementById('nvr-pass');
         const nvrChannelsInput = document.getElementById('nvr-channels');
         
-        if (nvrHostInput) nvrHostInput.value = settings.nvrHost;
+        if (nvrHostInput) nvrHostInput.value = settings.nvrHost || "https://cctv.smartniwas.com";
         if (nvrUserInput) nvrUserInput.value = settings.nvrUser;
         if (nvrPassInput) nvrPassInput.value = settings.nvrPass;
         if (nvrChannelsInput) nvrChannelsInput.value = settings.nvrChannels;
 
-        const firstTab = document.querySelector('.settings-tab-btn[data-tab="connection"]');
-        if (firstTab) firstTab.click();
+        const defaultTab = document.querySelector('.settings-tab-btn[data-tab="security"]');
+        if (defaultTab) defaultTab.click();
 
         settingsModal.classList.add('active');
         settingsModal.setAttribute('aria-hidden', 'false');
@@ -911,14 +915,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (openSettingsBtn) openSettingsBtn.addEventListener('click', showSettings);
     if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', hideSettings);
-    if (cancelSettingsBtn) cancelSettingsBtn.addEventListener('click', hideSettings);
 
-    if (settingsForm) {
-        settingsForm.addEventListener('submit', (e) => {
+    // Tab 1: Security Form Handler
+    const securityForm = document.getElementById('security-settings-form');
+    if (securityForm) {
+        securityForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
             const passcodeSetting = document.getElementById('portal-passcode-setting');
             const passcodeConfirm = document.getElementById('portal-passcode-confirm');
+
+            if (!passcodeSetting || !passcodeSetting.value.trim()) {
+                alert('Please enter a new master passcode.');
+                return;
+            }
+
+            const newPass = passcodeSetting.value.trim();
+            const confirmPass = passcodeConfirm ? passcodeConfirm.value.trim() : '';
+
+            if (newPass.length < 10) {
+                alert('Security Policy Failure: Master passcode must be at least 10 characters long.');
+                return;
+            }
+            if (['1234', '0000000000', '1111111111', '1234567890'].includes(newPass)) {
+                alert('Security Policy Failure: Default or simple passcodes are forbidden.');
+                return;
+            }
+            if (confirmPass && newPass !== confirmPass) {
+                alert('Security Policy Failure: New passcode and confirmation do not match.');
+                return;
+            }
+
+            settings.portalPasscode = newPass;
+            localStorage.setItem('smartniwasSettings', JSON.stringify(settings));
+
+            if (passcodeSetting) passcodeSetting.value = '';
+            if (passcodeConfirm) passcodeConfirm.value = '';
+
+            checkSecurityPolicy();
+            alert('✅ Master Passcode updated successfully!');
+            hideSettings();
+        });
+    }
+
+    // Tab 2: Connection Form Handler
+    const connectionForm = document.getElementById('connection-settings-form');
+    if (connectionForm) {
+        connectionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
             const mqttHostInput = document.getElementById('mqtt-host');
             const mqttUserInput = document.getElementById('mqtt-user');
             const mqttPassInput = document.getElementById('mqtt-pass');
@@ -927,48 +971,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const nvrPassInput = document.getElementById('nvr-pass');
             const nvrChannelsInput = document.getElementById('nvr-channels');
 
-            // Passcode Change Enforcement Policy Audit (10-Character Minimum)
-            if (passcodeSetting && passcodeSetting.value.trim()) {
-                const newPass = passcodeSetting.value.trim();
-                const confirmPass = passcodeConfirm ? passcodeConfirm.value.trim() : '';
-                
-                if (newPass.length < 10) {
-                    alert('Security Policy Failure: Master passcode must be at least 10 characters long.');
-                    return;
-                }
-                if (['1234', '0000000000', '1111111111', '1234567890'].includes(newPass)) {
-                    alert('Security Policy Failure: Simple or weak passcodes are forbidden.');
-                    return;
-                }
-                if (confirmPass && newPass !== confirmPass) {
-                    alert('Security Policy Failure: New passcode and confirmation do not match.');
-                    return;
-                }
-                
-                settings.portalPasscode = newPass;
-            }
-
-            settings.mqttHost = mqttHostInput ? mqttHostInput.value.trim() : '';
+            const hostVal = mqttHostInput ? mqttHostInput.value.trim() : '';
+            settings.mqttHost = hostVal || "wss://mqtt.smartniwas.com";
             settings.mqttUser = mqttUserInput ? mqttUserInput.value.trim() : '';
             settings.mqttPass = mqttPassInput ? mqttPassInput.value.trim() : '';
-            
+
             settings.cctvEnabled = cctvEnabledCheckbox ? cctvEnabledCheckbox.checked : false;
-            settings.nvrHost = nvrHostInput ? nvrHostInput.value.trim() : '';
+            const nvrHostVal = nvrHostInput ? nvrHostInput.value.trim() : '';
+            settings.nvrHost = nvrHostVal || "https://cctv.smartniwas.com";
             settings.nvrUser = nvrUserInput ? nvrUserInput.value.trim() : '';
             settings.nvrPass = nvrPassInput ? nvrPassInput.value.trim() : '';
             settings.nvrChannels = nvrChannelsInput ? nvrChannelsInput.value.trim() : '101,201';
-            
+
             localStorage.setItem('smartniwasSettings', JSON.stringify(settings));
-            
-            checkSecurityPolicy();
+
             initializeModules();
+            alert('✅ Connection Settings saved successfully!');
             hideSettings();
         });
     }
 
+    // Tab Navigation Logic
     const tabButtons = document.querySelectorAll('.settings-tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
-    const footerActions = document.getElementById('settings-form-actions');
 
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -980,14 +1005,6 @@ document.addEventListener('DOMContentLoaded', () => {
             tabPanels.forEach(p => p.classList.add('hidden'));
             const targetPanel = document.getElementById(`tab-${targetTab}`);
             if (targetPanel) targetPanel.classList.remove('hidden');
-
-            if (footerActions) {
-                if (targetTab === 'connection') {
-                    footerActions.classList.remove('hidden');
-                } else {
-                    footerActions.classList.add('hidden');
-                }
-            }
 
             if (targetTab === 'devices') {
                 renderDeviceList();
