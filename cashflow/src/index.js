@@ -51,7 +51,7 @@ export default {
         }
 
         // If user exists but has no password set (first-login for invited members)
-        if (user.password_hash === null || user.password_changed === 0) {
+        if (user.password_hash === null || user.password_hash === '' || user.password_changed === 0) {
           await env.DB.prepare('UPDATE users SET password_hash = ?, password_changed = 1 WHERE id = ?')
             .bind(passHash, user.id)
             .run();
@@ -190,9 +190,9 @@ export default {
           return new Response(JSON.stringify({ error: 'User already exists' }), { status: 400, headers: CORS_HEADERS });
         }
 
-        // Insert user with NULL password hash and password_changed = 0
+        // Insert user with empty string password hash and password_changed = 0
         await env.DB.prepare(
-          'INSERT INTO users (username, email, password_hash, role, name, password_changed) VALUES (?, ?, NULL, ?, ?, 0)'
+          "INSERT INTO users (username, email, password_hash, role, name, password_changed) VALUES (?, ?, '', ?, ?, 0)"
         ).bind(email.toLowerCase(), email.toLowerCase(), role || 'user', name).run();
 
         // Send invitation email via Resend API
