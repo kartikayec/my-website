@@ -48,4 +48,9 @@ Whenever generating or formatting Excel spreadsheets or CSVs, always adhere to t
 * **ARM64 VM Installer Detection:** VM installer scripts that download binary dependencies (like `cloudflared`) must detect host architectures dynamically (`uname -m`) to ensure `arm64` deb/rpm packages are downloaded for Oracle Free Tier ARM instances instead of hardcoded `amd64` packages.
 * **Wildcard Port 80 Routing Conflict:** When configuring standard static Nginx servers alongside control panels (like HestiaCP), remember that Nginx favors explicit IP bindings (`listen 10.0.0.x:80;`) over wildcard bindings (`listen 80;`). Always map custom static blocks to the explicit host interface IP to prevent default control panel proxy blocks from intercepting and throwing 502 Bad Gateway errors.
 
+## 9. Cloudflare Portal & Dashboard Navigation Rules
+* **Workers & Pages Consolidated Setup Bypass:** In the consolidated Workers & Pages creation wizard, if a repository contains a `wrangler.toml` file, Cloudflare will default to creating a Worker. To deploy a static website Page project instead, you must scroll to the bottom of the page and click the small link **`Looking to deploy Pages? Get started`** to open the Pages-specific Git importer.
+* **Zero Trust Public Hostnames Tab Name:** In the Cloudflare Zero Trust tunnel dashboard, the tab for routing public domains (e.g. mapping `smartniwas.com` to local port 80) is named **`Published application routes`** on some layouts instead of "Public Hostname".
+
+
 
