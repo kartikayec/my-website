@@ -18,8 +18,8 @@ Write-Host "Creating Cloudflare D1 Database 'smartniwas_cashflow'..."
 $d1Output = npx wrangler d1 create smartniwas_cashflow 2>&1
 
 $dbId = ""
-# Use regex to extract database_id
-if ($d1Output -match 'database_id = "([^"]+)"') {
+# Use regex to extract database_id (UUID format matching alphanumeric and hyphens)
+if ($d1Output -match 'database_id = "([a-zA-Z0-9\-]+)"') {
     $dbId = $Matches[1]
     Write-Host "✔ D1 Database created successfully. ID: $dbId" -ForegroundColor Green
 } else {
@@ -46,7 +46,8 @@ if (Test-Path "wrangler.toml") {
     Write-Host "Updating wrangler.toml with D1 Database ID: $dbId..."
     Copy-Item wrangler.toml wrangler.toml.bak -Force
     $content = Get-Content wrangler.toml -Raw
-    $content = $content -replace 'database_id = "PLACEHOLDER_DATABASE_ID"', "database_id = `"$dbId`""
+    $replacement = 'database_id = "{0}"' -f $dbId
+    $content = $content -replace 'database_id = "PLACEHOLDER_DATABASE_ID"', $replacement
     Set-Content wrangler.toml $content -NoNewline
     Write-Host "✔ wrangler.toml updated." -ForegroundColor Green
 } else {
