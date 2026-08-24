@@ -47,6 +47,12 @@ server {
         rewrite ^/demo-auth$ /demo-auth.html last;
     }
 
+    location /api/ {
+        proxy_pass https://portal.smartniwas.com/api/;
+        proxy_set_header Host portal.smartniwas.com;
+        proxy_ssl_server_name on;
+    }
+
     location / {
         try_files \$uri \$uri/ \$uri.html =404;
     }
