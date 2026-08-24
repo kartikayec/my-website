@@ -58,11 +58,23 @@ npx wrangler secret put RESEND_API_KEY
    ```bash
    npx wrangler deploy
    ```
-2. Create and deploy the Cash Flow frontend Page project on Cloudflare:
-   - Go to **Workers & Pages** -> **Create Application** -> **Pages** -> **Upload assets**.
-   - Name the project `smartniwas-cashflow`.
-   - Upload the `index.html` file inside the `cashflow/` folder.
-   - Go to **Custom Domains** and map it to **`cashflow.smartniwas.com`**.
+2. Deploy the Cash Flow frontend Page project on Cloudflare:
+   - **Method A: Continuous Git Deployment (Recommended)**:
+     - Go to **Workers & Pages** -> **Create Application** -> **Pages** -> **Connect to Git**.
+     - Connect your GitHub account and select the `kartikayec/my-website` repository.
+     - **Build Configuration**:
+       - Framework preset: `None`
+       - Build command: *(Leave empty)*
+       - Build output directory: `cashflow`
+     - Click **Save and Deploy**.
+     - Once deployed, go to **Custom Domains** on the project page and map it to **`cashflow.smartniwas.com`**.
+     - *Any future git push to the main branch will automatically deploy updates in real-time.*
+   
+   - **Method B: Manual Asset Upload**:
+     - Go to **Workers & Pages** -> **Create Application** -> **Pages** -> **Upload assets**.
+     - Name the project `smartniwas-cashflow`.
+     - Upload the `index.html` file inside the `cashflow/` folder.
+     - Go to **Custom Domains** and map it to **`cashflow.smartniwas.com`**.
 
 ---
 
