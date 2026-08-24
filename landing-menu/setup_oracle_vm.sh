@@ -41,10 +41,15 @@ server {
     server_name smartniwas.com www.smartniwas.com;
 
     root /var/www/smartniwas-menu;
-    index index.html;
+    index index.html demo-auth.html;
+
+    location = /demo-auth {
+        try_files /demo-auth.html =404;
+        default_type text/html;
+    }
 
     location / {
-        try_files \$uri \$uri/ =404;
+        try_files \$uri \$uri/ \$uri.html =404;
     }
 }
 EOF'
