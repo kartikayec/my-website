@@ -17,7 +17,17 @@ sudo apt install nginx git curl -y
 echo "Configuring portal landing folder /var/www/smartniwas-menu..."
 sudo mkdir -p /var/www/smartniwas-menu
 
-# Copy the menu page to target folder
+# Copy the menu page and auth assets to target folder
+if [ -d "js" ]; then
+  sudo cp -r js /var/www/smartniwas-menu/
+  echo "✔ js assets directory copied to web directory."
+fi
+
+if [ -f "demo-auth.html" ]; then
+  sudo cp demo-auth.html /var/www/smartniwas-menu/demo-auth.html
+  echo "✔ demo-auth.html copied to web directory."
+fi
+
 if [ -f "index.html" ]; then
   sudo cp index.html /var/www/smartniwas-menu/index.html
   echo "✔ index.html copied to web directory."
