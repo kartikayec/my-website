@@ -59,7 +59,10 @@ export default {
       }
 
       // Token Auth Middleware for protected endpoints
-      const authHeader = request.headers.get('Authorization');
+      let authHeader = request.headers.get('Authorization');
+      if (!authHeader && url.searchParams.has('token')) {
+        authHeader = `Bearer ${url.searchParams.get('token')}`;
+      }
       let currentUser = null;
       if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
