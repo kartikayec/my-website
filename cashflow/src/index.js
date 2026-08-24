@@ -198,7 +198,7 @@ export default {
         // Send invitation email via Resend API
         if (env.RESEND_API_KEY) {
           try {
-            await fetch('https://api.resend.com/emails', {
+            const mailRes = await fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${env.RESEND_API_KEY}`,
@@ -227,6 +227,10 @@ export default {
                 `
               })
             });
+            if (!mailRes.ok) {
+              const errText = await mailRes.text();
+              console.error(`Resend API Error (Status ${mailRes.status}):`, errText);
+            }
           } catch (mailErr) {
             console.error('Failed to send invite email:', mailErr);
           }
