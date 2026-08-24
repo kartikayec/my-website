@@ -52,5 +52,9 @@ Whenever generating or formatting Excel spreadsheets or CSVs, always adhere to t
 * **Workers & Pages Consolidated Setup Bypass:** In the consolidated Workers & Pages creation wizard, if a repository contains a `wrangler.toml` file, Cloudflare will default to creating a Worker. To deploy a static website Page project instead, you must scroll to the bottom of the page and click the small link **`Looking to deploy Pages? Get started`** to open the Pages-specific Git importer.
 * **Zero Trust Public Hostnames Tab Name:** In the Cloudflare Zero Trust tunnel dashboard, the tab for routing public domains (e.g. mapping `smartniwas.com` to local port 80) is named **`Published application routes`** on some layouts instead of "Public Hostname".
 
+## 10. Cloudflare Serverless APIs & DB Integrity
+* **Pages Redirects Absolute URL Bypass**: Cloudflare Pages `_redirects` files do not support `200` proxy rewrites pointing to absolute external URLs (only relative local paths are allowed). To proxy `/api/*` requests from a Pages frontend to a serverless Worker API backend, always use a Cloudflare Pages Function at `functions/api/[[path]].js` that intercepts requests and forwards them using a background `fetch` command.
+* **D1 NOT NULL Password Constraints**: When inviting users without pre-set credentials, if the database schema enforces a `NOT NULL` constraint on the `password_hash` column, insert an empty string `''` (not `NULL`) as the placeholder. Ensure both the login API and authentication middleware treat `''` and `NULL` as valid triggers for first-time password setup.
+
 
 
