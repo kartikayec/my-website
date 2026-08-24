@@ -119,7 +119,6 @@ let settings = JSON.parse(localStorage.getItem('smartniwasSettings')) || {
     nvrChannels: "101,201"
 };
 
-// Ensure fallback passcode exists
 if (!settings.portalPasscode) {
     settings.portalPasscode = "1234";
 }
@@ -150,7 +149,21 @@ function getSwitchTopics(sw) {
 let discoveryActive = false;
 let discoveredTopics = [];
 
-// 4. Independent Authentication Module Gateway
+// 4. Security Enforcement Policy Auditor
+function checkSecurityPolicy() {
+    const banner = document.getElementById('security-enforcement-banner');
+    const isDefaultPasscode = (settings.portalPasscode === '1234' || !settings.portalPasscode);
+    
+    if (banner) {
+        if (isDefaultPasscode && sessionStorage.getItem('smartniwasPortalAuth') === 'true') {
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
+}
+
+// 5. Independent Authentication Module Gateway
 function checkPortalAuth() {
     const isAuth = sessionStorage.getItem('smartniwasPortalAuth') === 'true';
     const authModal = document.getElementById('auth-modal');
@@ -163,21 +176,21 @@ function checkPortalAuth() {
             const passInput = document.getElementById('portal-passcode-input');
             if (passInput) setTimeout(() => passInput.focus(), 150);
         }
-        // Stop active background streams while locked
         if (mqttClient) {
             mqttClient.end();
             mqttClient = null;
         }
         cctvIntervals.forEach(clearInterval);
         cctvIntervals = [];
+        checkSecurityPolicy();
     } else {
         document.body.classList.remove('portal-locked');
         if (authModal) {
             authModal.classList.remove('active');
             authModal.setAttribute('aria-hidden', 'true');
         }
-        // Initialize active modules upon successful authentication
         initializeModules();
+        checkSecurityPolicy();
     }
 }
 
@@ -186,14 +199,12 @@ window.lockPortal = function() {
     checkPortalAuth();
 };
 
-// 5. Modules Setup and Connection Logic
+// 6. Modules Setup and Connection Logic
 function initializeModules() {
-    // Prevent module setup if portal is locked
     if (sessionStorage.getItem('smartniwasPortalAuth') !== 'true') {
         return;
     }
 
-    // 1. MQTT Section Setup
     if (settings.mqttHost) {
         setupMQTT();
     } else {
@@ -204,7 +215,6 @@ function initializeModules() {
         renderIoTPlaceholder();
     }
 
-    // 2. CCTV Section Setup
     if (settings.cctvEnabled && settings.nvrHost) {
         setupCCTV();
     } else {
@@ -313,7 +323,7 @@ function setupMQTT() {
         });
 
         mqttClient.on('error', () => {
-            // Silently handle MQTT error without leaking details to browser log
+            // Silently handle MQTT error
         });
 
     } catch (e) {
@@ -331,7 +341,6 @@ function renderIoTGrid() {
         return;
     }
 
-    // Render Sensors safely
     iotDevices.sensors.forEach(sen => {
         const card = document.createElement('div');
         card.className = 'sensor-card';
@@ -361,7 +370,6 @@ function renderIoTGrid() {
         grid.appendChild(card);
     });
 
-    // Render Switches safely
     iotDevices.switches.forEach(sw => {
         const card = document.createElement('div');
         card.className = 'switch-card';
@@ -415,7 +423,6 @@ window.toggleSwitch = function(id) {
     }
 };
 
-// CCTV NVR Safe Helper
 function getCctvImageUrl(channel) {
     if (!settings.nvrHost) return '';
     let hostClean = settings.nvrHost.replace(/\/+$/, '');
@@ -540,7 +547,7 @@ window.openCameraStream = function(channel) {
     }
 };
 
-// 6. Device Manager Inventory CRUD
+// 7. Device Manager Inventory CRUD
 function renderDeviceList() {
     const list = document.getElementById('device-list');
     if (!list) return;
@@ -636,7 +643,7 @@ window.deleteDevice = function(type, id) {
     initializeModules();
 };
 
-// 7. Topic Discovery Renderer
+// 8. Topic Discovery Renderer
 function updateDiscoveryBanner(text, className) {
     const banner = document.getElementById('discovery-status-banner');
     if (banner) {
@@ -728,7 +735,7 @@ window.quickAddDevice = function(type, topic) {
     if (nameInput) nameInput.focus();
 };
 
-// 8. Time Clock
+// 9. Time Clock
 function updateClock() {
     const clockElem = document.getElementById('live-clock');
     if (clockElem) {
@@ -746,6 +753,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Run Security Authentication Gateway Check
     checkPortalAuth();
+
+    // Enforce Change PIN Banner Action
+    const enforceBtn = document.getElementById('enforce-change-pin-btn');
+    if (enforceBtn) {
+        enforceBtn.addEventListener('click', () => {
+            const openSettingsBtn = document.getElementById('open-settings-btn');
+            if (openSettingsBtn) openSettingsBtn.click();
+        });
+    }
 
     // Authentication Form Binding
     const authForm = document.getElementById('auth-form');
@@ -808,11 +824,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const showSettings = () => {
         if (!settingsModal) return;
         const passcodeSetting = document.getElementById('portal-passcode-setting');
+        const passcodeConfirm = document.getElementById('portal-passcode-confirm');
         const mqttHostInput = document.getElementById('mqtt-host');
         const mqttUserInput = document.getElementById('mqtt-user');
         const mqttPassInput = document.getElementById('mqtt-pass');
         
-        if (passcodeSetting) passcodeSetting.value = settings.portalPasscode || "1234";
+        if (passcodeSetting) passcodeSetting.value = '';
+        if (passcodeConfirm) passcodeConfirm.value = '';
         if (mqttHostInput) mqttHostInput.value = settings.mqttHost;
         if (mqttUserInput) mqttUserInput.value = settings.mqttUser;
         if (mqttPassInput) mqttPassInput.value = settings.mqttPass;
@@ -904,6 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             const passcodeSetting = document.getElementById('portal-passcode-setting');
+            const passcodeConfirm = document.getElementById('portal-passcode-confirm');
             const mqttHostInput = document.getElementById('mqtt-host');
             const mqttUserInput = document.getElementById('mqtt-user');
             const mqttPassInput = document.getElementById('mqtt-pass');
@@ -912,9 +931,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const nvrPassInput = document.getElementById('nvr-pass');
             const nvrChannelsInput = document.getElementById('nvr-channels');
 
+            // Passcode Change Enforcement Policy Audit
             if (passcodeSetting && passcodeSetting.value.trim()) {
-                settings.portalPasscode = passcodeSetting.value.trim();
+                const newPass = passcodeSetting.value.trim();
+                const confirmPass = passcodeConfirm ? passcodeConfirm.value.trim() : '';
+                
+                if (newPass.length < 4) {
+                    alert('Security Policy Failure: Master passcode must be at least 4 characters long.');
+                    return;
+                }
+                if (['1234', '0000', '1111', '123456'].includes(newPass)) {
+                    alert('Security Policy Failure: Default or weak passcodes (e.g. 1234, 0000) are forbidden.');
+                    return;
+                }
+                if (confirmPass && newPass !== confirmPass) {
+                    alert('Security Policy Failure: New passcode and confirmation do not match.');
+                    return;
+                }
+                
+                settings.portalPasscode = newPass;
             }
+
             settings.mqttHost = mqttHostInput ? mqttHostInput.value.trim() : '';
             settings.mqttUser = mqttUserInput ? mqttUserInput.value.trim() : '';
             settings.mqttPass = mqttPassInput ? mqttPassInput.value.trim() : '';
@@ -927,6 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             localStorage.setItem('smartniwasSettings', JSON.stringify(settings));
             
+            checkSecurityPolicy();
             initializeModules();
             hideSettings();
         });

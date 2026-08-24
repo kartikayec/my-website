@@ -49,6 +49,17 @@
             </div>
         </header>
 
+        <!-- Mandatory Security Passcode Enforcement Banner -->
+        <div id="security-enforcement-banner" class="security-banner hidden">
+            <div class="security-banner-content">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span><strong>Security Enforcement Policy:</strong> You are currently using the default master PIN (<code>1234</code>). Please change your passcode under Portal Settings.</span>
+            </div>
+            <button id="enforce-change-pin-btn" class="btn btn-warning btn-xs">
+                <i class="fa-solid fa-key"></i> Change PIN Now
+            </button>
+        </div>
+
         <!-- Main Grid -->
         <div class="portal-grid">
             
@@ -131,10 +142,19 @@
                     <!-- Connection Tab -->
                     <div id="tab-connection" class="tab-panel">
                         <!-- Security Access Passcode -->
-                        <div class="settings-group-title">Portal Security Access</div>
-                        <div class="form-group">
-                            <label for="portal-passcode-setting" class="form-label">Master Passcode / PIN:</label>
-                            <input type="password" id="portal-passcode-setting" placeholder="Default: 1234">
+                        <div class="settings-group-title">Portal Security Access & Policy</div>
+                        <div class="form-row">
+                            <div class="form-group half-width">
+                                <label for="portal-passcode-setting" class="form-label">New Master Passcode / PIN:</label>
+                                <input type="password" id="portal-passcode-setting" placeholder="Min 4 characters">
+                            </div>
+                            <div class="form-group half-width">
+                                <label for="portal-passcode-confirm" class="form-label">Confirm New Passcode:</label>
+                                <input type="password" id="portal-passcode-confirm" placeholder="Re-enter PIN">
+                            </div>
+                        </div>
+                        <div class="policy-note">
+                            <i class="fa-solid fa-shield-halved"></i> <strong>Enforcement Policy:</strong> Passcode must be at least 4 characters and cannot match default PINs (e.g. <code>1234</code>, <code>0000</code>).
                         </div>
 
                         <!-- MQTT Broker Section -->

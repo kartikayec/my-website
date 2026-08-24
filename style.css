@@ -1181,3 +1181,60 @@ body.portal-locked main.portal-container {
     font-size: 0.95rem;
     margin-top: 0.5rem;
 }
+
+/* Security Enforcement Banner & Policy Styles */
+.security-banner {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    border-radius: 0.85rem;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    color: #fef08a;
+    backdrop-filter: blur(10px);
+}
+
+.security-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.88rem;
+}
+
+.security-banner-content i {
+    font-size: 1.25rem;
+    color: #f59e0b;
+}
+
+.security-banner code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.3rem;
+    color: #fde047;
+    font-family: monospace;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+    color: #fff;
+}
+
+.policy-note {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: rgba(15, 23, 42, 0.25);
+    border-left: 3px solid var(--accent);
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.4rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
