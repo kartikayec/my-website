@@ -39,8 +39,8 @@ export async function onRequestPost(context) {
             ).bind(inviteToken, userId, expiresAt).run();
         }
 
-        // Primary domain: smartniwas.com
-        const inviteUrl = `https://smartniwas.com/demo-auth?invite=${inviteToken}`;
+        // Explicit .html extension guarantees text/html MIME type across all Nginx servers
+        const inviteUrl = `https://smartniwas.com/demo-auth.html?invite=${inviteToken}`;
 
         const emailHtml = `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px;">
