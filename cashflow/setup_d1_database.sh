@@ -1,38 +1,25 @@
 #!/bin/bash
-# SmartNiwas Cloudflare D1 & Worker Auto-Setup Script
+# SmartNiwas Cloudflare D1 & Worker Auto-Setup Script (Bash)
 
 echo "=================================================="
 echo " Starting SmartNiwas D1 & Worker Setup"
 echo "=================================================="
 
-# 1. Verify wrangler authentication
-if ! npx wrangler whoami > /dev/null 2>&1; then
-  echo "Error: Wrangler is not logged in. Please run: npx wrangler login"
+# 1. Ask user to create the database interactively to bind session tokens
+echo "Step 1: If you have not created your D1 database, run this in a separate terminal:"
+echo "npx wrangler d1 create smartniwas_cashflow"
+echo ""
+
+echo "Please enter/paste your D1 Database ID (UUID):"
+read -r DB_ID
+DB_ID=$(echo "$DB_ID" | xargs) # trim whitespace
+
+if [ -z "$DB_ID" ]; then
+  echo "Error: D1 Database ID cannot be empty. Please run the script again."
   exit 1
 fi
 
-echo "✔ Wrangler is authenticated."
-
-# 2. Create Cloudflare D1 database
-echo "Creating Cloudflare D1 Database 'smartniwas_cashflow'..."
-D1_OUTPUT=$(npx wrangler d1 create smartniwas_cashflow 2>&1)
-
-if echo "$D1_OUTPUT" | grep -q "database_id ="; then
-  DB_ID=$(echo "$D1_OUTPUT" | grep "database_id =" | head -n 1 | awk -F'"' '{print $2}')
-  echo "✔ D1 Database created successfully. ID: $DB_ID"
-else
-  # Check if database already exists and retrieve ID
-  echo "Database might already exist, fetching existing ID..."
-  DB_ID=$(npx wrangler d1 list --json | grep -o '"database_id":"[^"]*' | grep -o '[^"]*$' | head -n 1)
-  if [ -z "$DB_ID" ]; then
-    echo "Error: Could not retrieve D1 Database ID. Output:"
-    echo "$D1_OUTPUT"
-    exit 1
-  fi
-  echo "✔ Found existing D1 Database. ID: $DB_ID"
-fi
-
-# 3. Update wrangler.toml with the D1 Database ID
+# 2. Update wrangler.toml with the D1 Database ID
 if [ -f "wrangler.toml" ]; then
   echo "Updating wrangler.toml with D1 Database ID: $DB_ID..."
   # Backup wrangler.toml
@@ -45,7 +32,7 @@ else
   exit 1
 fi
 
-# 4. Load the D1 SQLite Schema
+# 3. Load the D1 SQLite Schema
 echo "Executing SQL schema migration on Cloudflare D1..."
 if [ -f "schema.sql" ]; then
   npx wrangler d1 execute smartniwas_cashflow --file=schema.sql --local
@@ -56,7 +43,7 @@ else
   exit 1
 fi
 
-# 5. Set Resend secrets
+# 4. Set Resend secrets
 echo "--------------------------------------------------"
 echo "Please enter your Resend API Key (re_xxxx):"
 read -r RESEND_KEY
@@ -68,7 +55,7 @@ else
   echo "Skipped setting Resend API key secret. You can set it manually later."
 fi
 
-# 6. Deploy Worker
+# 5. Deploy Worker
 echo "Deploying Cloudflare Worker API..."
 npx wrangler deploy
 
