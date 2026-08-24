@@ -44,8 +44,7 @@ server {
     index index.html demo-auth.html;
 
     location = /demo-auth {
-        try_files /demo-auth.html =404;
-        default_type text/html;
+        rewrite ^/demo-auth$ /demo-auth.html last;
     }
 
     location / {
