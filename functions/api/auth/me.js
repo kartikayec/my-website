@@ -1,26 +1,43 @@
 // Serverless Endpoint: GET /api/auth/me
+export async function onRequestOptions(context) {
+    const origin = context.request.headers.get("Origin") || "*";
+    return new Response(null, {
+        status: 204,
+        headers: {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+        }
+    });
+}
+
 export async function onRequestGet(context) {
+    const origin = context.request.headers.get("Origin") || "*";
+    const corsHeaders = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true"
+    };
+
     try {
         const cookieHeader = context.request.headers.get("Cookie") || "";
-        const match = cookieHeader.match(/smartniwas_session=([^;]+)/);
-        
-        if (!match) {
-            return new Response(JSON.stringify({ authenticated: false }), {
-                headers: { "Content-Type": "application/json" }
+        const sessionToken = parseCookie(cookieHeader, "smartniwas_session");
+
+        if (!sessionToken) {
+            return new Response(JSON.stringify({ authenticated: false, user: null }), {
+                headers: corsHeaders
             });
         }
 
-        const token = match[1];
-
-        // Query Cloudflare D1 DB if bound
         if (context.env.DB) {
             const tokenRow = await context.env.DB.prepare(
                 "SELECT user_id, expires_at FROM auth_tokens WHERE token = ? AND type = 'SESSION'"
-            ).bind(token).first();
+            ).bind(sessionToken).first();
 
             if (!tokenRow || new Date(tokenRow.expires_at) < new Date()) {
-                return new Response(JSON.stringify({ authenticated: false }), {
-                    headers: { "Content-Type": "application/json" }
+                return new Response(JSON.stringify({ authenticated: false, user: null }), {
+                    headers: corsHeaders
                 });
             }
 
@@ -29,8 +46,8 @@ export async function onRequestGet(context) {
             ).bind(tokenRow.user_id).first();
 
             if (!user) {
-                return new Response(JSON.stringify({ authenticated: false }), {
-                    headers: { "Content-Type": "application/json" }
+                return new Response(JSON.stringify({ authenticated: false, user: null }), {
+                    headers: corsHeaders
                 });
             }
 
@@ -43,26 +60,30 @@ export async function onRequestGet(context) {
                     mustChangePassword: !!user.must_change_password
                 }
             }), {
-                headers: { "Content-Type": "application/json" }
+                headers: corsHeaders
             });
         }
 
-        // Fallback for session validation if D1 DB binding is pending setup
+        // Mock response if DB binding is pending
         return new Response(JSON.stringify({
             authenticated: true,
-            user: {
-                id: "usr_admin",
-                email: "admin@smartniwas.com",
-                role: "admin",
-                mustChangePassword: false
-            }
+            user: { id: "usr_101", email: "admin@smartniwas.com", role: "admin", mustChangePassword: false }
         }), {
-            headers: { "Content-Type": "application/json" }
+            headers: corsHeaders
         });
     } catch (err) {
         return new Response(JSON.stringify({ authenticated: false, error: err.message }), {
             status: 500,
-            headers: { "Content-Type": "application/json" }
+            headers: corsHeaders
         });
     }
+}
+
+function parseCookie(cookieHeader, name) {
+    const cookies = cookieHeader.split(';');
+    for (let c of cookies) {
+        const [k, v] = c.trim().split('=');
+        if (k === name) return v;
+    }
+    return null;
 }

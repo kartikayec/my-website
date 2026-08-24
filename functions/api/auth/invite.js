@@ -1,7 +1,27 @@
 // Serverless Endpoint: POST /api/auth/invite
 const FALLBACK_RESEND_KEY = "re_" + "PQcYkemg_" + "zdeYbM1eUZvrVfpQpvGAYeN7";
 
+export async function onRequestOptions(context) {
+    const origin = context.request.headers.get("Origin") || "*";
+    return new Response(null, {
+        status: 204,
+        headers: {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+        }
+    });
+}
+
 export async function onRequestPost(context) {
+    const origin = context.request.headers.get("Origin") || "*";
+    const corsHeaders = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true"
+    };
+
     try {
         const { email, role } = await context.request.json();
         const apiKey = context.env.RESEND_API_KEY || FALLBACK_RESEND_KEY;
@@ -9,7 +29,7 @@ export async function onRequestPost(context) {
         if (!email) {
             return new Response(JSON.stringify({ error: "Email address is required." }), {
                 status: 400,
-                headers: { "Content-Type": "application/json" }
+                headers: corsHeaders
             });
         }
 
@@ -23,7 +43,7 @@ export async function onRequestPost(context) {
             if (existing) {
                 return new Response(JSON.stringify({ error: "User with this email already exists." }), {
                     status: 400,
-                    headers: { "Content-Type": "application/json" }
+                    headers: corsHeaders
                 });
             }
 
@@ -72,12 +92,12 @@ export async function onRequestPost(context) {
 
         const resData = await resendRes.json();
         return new Response(JSON.stringify({ success: true, inviteToken, resend: resData }), {
-            headers: { "Content-Type": "application/json" }
+            headers: corsHeaders
         });
     } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), {
             status: 500,
-            headers: { "Content-Type": "application/json" }
+            headers: corsHeaders
         });
     }
 }

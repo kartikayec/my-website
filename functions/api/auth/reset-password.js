@@ -1,26 +1,46 @@
 // Serverless Endpoint: POST /api/auth/reset-password
+export async function onRequestOptions(context) {
+    const origin = context.request.headers.get("Origin") || "*";
+    return new Response(null, {
+        status: 204,
+        headers: {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+        }
+    });
+}
+
 export async function onRequestPost(context) {
+    const origin = context.request.headers.get("Origin") || "*";
+    const corsHeaders = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true"
+    };
+
     try {
         const { resetToken, newPassword, confirmPassword } = await context.request.json();
         
         if (!resetToken || !newPassword || !confirmPassword) {
             return new Response(JSON.stringify({ error: "Reset token, new password, and confirmation are required." }), {
                 status: 400,
-                headers: { "Content-Type": "application/json" }
+                headers: corsHeaders
             });
         }
 
         if (newPassword.length < 10) {
             return new Response(JSON.stringify({ error: "Password must be at least 10 characters long." }), {
                 status: 400,
-                headers: { "Content-Type": "application/json" }
+                headers: corsHeaders
             });
         }
 
         if (newPassword !== confirmPassword) {
             return new Response(JSON.stringify({ error: "New password and confirmation do not match." }), {
                 status: 400,
-                headers: { "Content-Type": "application/json" }
+                headers: corsHeaders
             });
         }
 
@@ -34,7 +54,7 @@ export async function onRequestPost(context) {
             if (!tokenRow || new Date(tokenRow.expires_at) < new Date()) {
                 return new Response(JSON.stringify({ error: "Reset token is invalid or has expired." }), {
                     status: 400,
-                    headers: { "Content-Type": "application/json" }
+                    headers: corsHeaders
                 });
             }
 
@@ -49,12 +69,12 @@ export async function onRequestPost(context) {
             success: true,
             message: "Your password has been successfully updated. You can now log in with your new password."
         }), {
-            headers: { "Content-Type": "application/json" }
+            headers: corsHeaders
         });
     } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), {
             status: 500,
-            headers: { "Content-Type": "application/json" }
+            headers: corsHeaders
         });
     }
 }

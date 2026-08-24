@@ -1,12 +1,32 @@
 // Serverless Endpoint: POST /api/auth/login
+export async function onRequestOptions(context) {
+    const origin = context.request.headers.get("Origin") || "*";
+    return new Response(null, {
+        status: 204,
+        headers: {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+        }
+    });
+}
+
 export async function onRequestPost(context) {
+    const origin = context.request.headers.get("Origin") || "*";
+    const corsHeaders = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true"
+    };
+
     try {
         const { email, password } = await context.request.json();
         
         if (!email || !password) {
             return new Response(JSON.stringify({ error: "Email and password are required." }), {
                 status: 400,
-                headers: { "Content-Type": "application/json" }
+                headers: corsHeaders
             });
         }
 
@@ -42,7 +62,7 @@ export async function onRequestPost(context) {
                     user: { id: userId, email: cleanEmail, role: "admin", mustChangePassword: false }
                 }), {
                     headers: {
-                        "Content-Type": "application/json",
+                        ...corsHeaders,
                         "Set-Cookie": cookieHeader
                     }
                 });
@@ -56,7 +76,7 @@ export async function onRequestPost(context) {
             if (!user || !user.is_active) {
                 return new Response(JSON.stringify({ error: "Invalid email or password." }), {
                     status: 401,
-                    headers: { "Content-Type": "application/json" }
+                    headers: corsHeaders
                 });
             }
 
@@ -64,7 +84,7 @@ export async function onRequestPost(context) {
             if (!valid) {
                 return new Response(JSON.stringify({ error: "Invalid email or password." }), {
                     status: 401,
-                    headers: { "Content-Type": "application/json" }
+                    headers: corsHeaders
                 });
             }
 
@@ -85,7 +105,7 @@ export async function onRequestPost(context) {
                 }
             }), {
                 headers: {
-                    "Content-Type": "application/json",
+                    ...corsHeaders,
                     "Set-Cookie": cookieHeader
                 }
             });
@@ -101,14 +121,14 @@ export async function onRequestPost(context) {
             user: { id: "usr_101", email: cleanEmail, role: role, mustChangePassword: false }
         }), {
             headers: {
-                "Content-Type": "application/json",
+                ...corsHeaders,
                 "Set-Cookie": cookieHeader
             }
         });
     } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), {
             status: 500,
-            headers: { "Content-Type": "application/json" }
+            headers: corsHeaders
         });
     }
 }
