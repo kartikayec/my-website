@@ -81,13 +81,27 @@
                 </section>
             </div>
 
-            <!-- Column 2: Notes & CCTV -->
+            <!-- Column 2: Notes, CCTV & Cashflow Tasks -->
             <div class="right-column">
                 <!-- CCTV Section -->
                 <section id="cctv-section" class="grid-section cctv-section">
                     <h2><i class="fa-solid fa-video"></i> Security Monitor</h2>
                     <div class="cctv-grid" id="cctv-grid">
                         <!-- Injected NVR camera monitors or placeholder -->
+                    </div>
+                </section>
+
+                <!-- Indicative Cashflow & Contractual Payments Section -->
+                <section id="cashflow-section" class="grid-section cashflow-section">
+                    <div class="cashflow-section-header">
+                        <h2><i class="fa-solid fa-file-invoice-dollar"></i> Indicative Cashflow Tasks</h2>
+                        <div class="cashflow-summary-badge">
+                            <span id="cashflow-pending-count" class="badge">0 Pending</span>
+                            <span id="cashflow-total-outlay" class="outlay-sum">₹0</span>
+                        </div>
+                    </div>
+                    <div class="cashflow-grid" id="cashflow-grid">
+                        <!-- Injected dynamically by cashflow.js -->
                     </div>
                 </section>
 
@@ -352,6 +366,6 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>

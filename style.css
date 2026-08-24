@@ -1282,3 +1282,132 @@ body.portal-locked main.portal-container {
     font-size: 0.9rem;
     font-weight: 500;
 }
+
+/* Indicative Cashflow Task Manager Styles */
+.cashflow-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.cashflow-summary-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.cashflow-summary-badge .badge {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fde047;
+    padding: 0.25rem 0.65rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.cashflow-summary-badge .outlay-sum {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.15);
+    padding: 0.2rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.cashflow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.cashflow-card {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.85rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.75rem;
+    backdrop-filter: blur(12px);
+    transition: all 0.25s ease;
+}
+
+.cashflow-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.cashflow-card.completed {
+    opacity: 0.65;
+    background: rgba(15, 23, 42, 0.3);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+.cashflow-card.completed .cashflow-title {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.cashflow-card.overdue {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.cashflow-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.cashflow-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.category-icon {
+    font-size: 1.25rem;
+    color: #818cf8;
+    background: rgba(129, 140, 248, 0.15);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.cashflow-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.cashflow-category-badge {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.cashflow-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.cashflow-card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cashflow-due-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
