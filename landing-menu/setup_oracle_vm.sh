@@ -72,10 +72,24 @@ fi
 # 6. Install Cloudflare Tunnel Client (cloudflared)
 if ! command -v cloudflared &> /dev/null; then
   echo "Installing Cloudflare Tunnel client (cloudflared)..."
-  curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+  ARCH=$(uname -m)
+  if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
+    CF_ARCH="amd64"
+  elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+    CF_ARCH="arm64"
+  else
+    CF_ARCH="386"
+  fi
+  echo "Detected architecture: $ARCH. Downloading cloudflared for $CF_ARCH..."
+  curl -L --output cloudflared.deb "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}.deb"
   sudo dpkg -i cloudflared.deb
   rm -f cloudflared.deb
-  echo "✔ cloudflared client installed."
+  if command -v cloudflared &> /dev/null; then
+    echo "✔ cloudflared client installed."
+  else
+    echo "Error: cloudflared installation failed."
+    exit 1
+  fi
 else
   echo "✔ cloudflared is already installed."
 fi
