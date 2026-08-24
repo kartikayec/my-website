@@ -25,9 +25,10 @@ Follow these steps in your **Cloudflare Dashboard** to re-route your sub-apps:
 
 ### Method A: Automated Setup (Recommended)
 We have provided an automated setup script that executes all setup, binding, migration, and deployment commands for you:
-1. Navigate to the `cashflow` folder in your terminal.
-2. Run the setup script:
+1. Open your terminal at the root of the cloned `my-website` folder.
+2. Change directory and run the setup script:
    ```bash
+   cd cashflow
    bash setup_d1_database.sh
    ```
 3. Follow the on-screen prompts to input your Resend API Key when prompted.
@@ -37,9 +38,9 @@ We have provided an automated setup script that executes all setup, binding, mig
 ### Method B: Manual Setup Steps
 
 ### 1. Initialize the Cloudflare D1 SQLite Database
-Navigate to the `cashflow` folder in your terminal and execute:
+Open your terminal at the root of the project, change directory, and execute:
 ```bash
-# Create the D1 Database
+cd cashflow
 npx wrangler d1 create smartniwas_cashflow
 ```
 *Note the generated **Database ID** output in your terminal.*
@@ -56,12 +57,14 @@ database_id = "your-actual-d1-uuid-here"
 ### 3. Load the SQL Schema
 Run this command to build the tables inside your Cloudflare D1 database:
 ```bash
+cd cashflow
 npx wrangler d1 execute smartniwas_cashflow --file=schema.sql
 ```
 
 ### 4. Set Worker Secrets (Resend Email API Key)
 Bind your Resend API token securely to the Worker:
 ```bash
+cd cashflow
 npx wrangler secret put RESEND_API_KEY
 ```
 *Paste your `re_xxxx` API key when prompted.*
@@ -69,6 +72,7 @@ npx wrangler secret put RESEND_API_KEY
 ### 5. Deploy the Worker and Frontend
 1. Deploy the API Worker backend:
    ```bash
+   cd cashflow
    npx wrangler deploy
    ```
 2. Deploy the Cash Flow frontend Page project on Cloudflare:
@@ -101,10 +105,10 @@ We have provided a VM auto-installer script that handles packages, folder creati
    ```bash
    ssh ubuntu@<YOUR_VM_IP>
    ```
-2. Git clone your repository or upload `landing-menu/setup_oracle_vm.sh` and `landing-menu/index.html` to the VM.
-3. Run the installer:
+2. Git clone your repository and navigate to the landing menu directory:
    ```bash
-   cd landing-menu/
+   git clone https://github.com/kartikayec/my-website.git
+   cd my-website/landing-menu
    bash setup_oracle_vm.sh
    ```
 
