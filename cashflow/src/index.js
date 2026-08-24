@@ -15,6 +15,53 @@ async function sha256(message) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Crypto: Import HMAC secret key
+async function getCryptoKey(secret) {
+  const encoder = new TextEncoder();
+  return await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify']
+  );
+}
+
+// Crypto: Sign token payload returning base64.signature
+async function signToken(payload, secret) {
+  const payloadStr = JSON.stringify(payload);
+  const encoder = new TextEncoder();
+  const key = await getCryptoKey(secret);
+  const sigBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(payloadStr));
+  const sigHex = Array.from(new Uint8Array(sigBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  return btoa(payloadStr) + '.' + sigHex;
+}
+
+// Crypto: Verify token returning payload or null
+async function verifyToken(tokenStr, secret) {
+  const parts = tokenStr.split('.');
+  if (parts.length !== 2) return null;
+  const [payloadB64, sigHex] = parts;
+
+  try {
+    const payloadStr = atob(payloadB64);
+    const encoder = new TextEncoder();
+    const key = await getCryptoKey(secret);
+    
+    // Hex to Uint8Array converter
+    const sigBytes = new Uint8Array(
+      sigHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
+    );
+
+    const isValid = await crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(payloadStr));
+    return isValid ? JSON.parse(payloadStr) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -62,9 +109,13 @@ export default {
           return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers: CORS_HEADERS });
         }
 
-        // Return a simple session token (for ease we will return a JSON payload with user context)
+        // Return a cryptographically signed token
+        const token = await signToken(
+          { id: user.id, email: user.email, role: user.role, time: Date.now() },
+          env.JWT_SECRET || 'smartniwas_default_fallback_secret_key'
+        );
         return new Response(JSON.stringify({
-          token: btoa(JSON.stringify({ id: user.id, email: user.email, role: user.role, time: Date.now() })),
+          token,
           user: { id: user.id, name: user.name, email: user.email, role: user.role }
         }), { headers: CORS_HEADERS });
       }
@@ -76,12 +127,21 @@ export default {
       }
       let currentUser = null;
       if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const rawToken = atob(authHeader.split(' ')[1]);
-          currentUser = JSON.parse(rawToken);
-        } catch (e) {
-          return new Response(JSON.stringify({ error: 'Unauthorized: Invalid token' }), { status: 401, headers: CORS_HEADERS });
+        const tokenStr = authHeader.split(' ')[1];
+        const payload = await verifyToken(tokenStr, env.JWT_SECRET || 'smartniwas_default_fallback_secret_key');
+        
+        if (!payload) {
+          return new Response(JSON.stringify({ error: 'Unauthorized: Invalid token signature' }), { status: 401, headers: CORS_HEADERS });
         }
+        
+        // Immediate Session Revocation: Query D1 database to ensure the user still exists
+        const user = await env.DB.prepare('SELECT id, email, role, name FROM users WHERE id = ?').bind(payload.id).first();
+        if (!user) {
+          return new Response(JSON.stringify({ error: 'Unauthorized: User account has been deleted' }), { status: 401, headers: CORS_HEADERS });
+        }
+        
+        // Context is updated with the latest user role and details from database in real-time
+        currentUser = user;
       }
 
       // Public read capability or strict enforcement (we will enforce token auth for editing/viewing)
