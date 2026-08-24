@@ -152,10 +152,10 @@ let discoveredTopics = [];
 // 4. Security Enforcement Policy Auditor
 function checkSecurityPolicy() {
     const banner = document.getElementById('security-enforcement-banner');
-    const isDefaultPasscode = (settings.portalPasscode === '1234' || !settings.portalPasscode);
+    const isWeakPasscode = (settings.portalPasscode === '1234' || settings.portalPasscode.length < 10);
     
     if (banner) {
-        if (isDefaultPasscode && sessionStorage.getItem('smartniwasPortalAuth') === 'true') {
+        if (isWeakPasscode && sessionStorage.getItem('smartniwasPortalAuth') === 'true') {
             banner.classList.remove('hidden');
         } else {
             banner.classList.add('hidden');
@@ -886,10 +886,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (noteForm) noteForm.reset();
     };
 
-    if (!settings.mqttHost && sessionStorage.getItem('smartniwasPortalAuth') === 'true') {
-        setTimeout(showSettings, 600);
-    }
-
     if (addNoteBtn) addNoteBtn.addEventListener('click', showNoteModal);
     if (cancelNoteBtn) cancelNoteBtn.addEventListener('click', hideNoteModal);
     if (closeNoteBtn) closeNoteBtn.addEventListener('click', hideNoteModal);
@@ -931,17 +927,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const nvrPassInput = document.getElementById('nvr-pass');
             const nvrChannelsInput = document.getElementById('nvr-channels');
 
-            // Passcode Change Enforcement Policy Audit
+            // Passcode Change Enforcement Policy Audit (10-Character Minimum)
             if (passcodeSetting && passcodeSetting.value.trim()) {
                 const newPass = passcodeSetting.value.trim();
                 const confirmPass = passcodeConfirm ? passcodeConfirm.value.trim() : '';
                 
-                if (newPass.length < 4) {
-                    alert('Security Policy Failure: Master passcode must be at least 4 characters long.');
+                if (newPass.length < 10) {
+                    alert('Security Policy Failure: Master passcode must be at least 10 characters long.');
                     return;
                 }
-                if (['1234', '0000', '1111', '123456'].includes(newPass)) {
-                    alert('Security Policy Failure: Default or weak passcodes (e.g. 1234, 0000) are forbidden.');
+                if (['1234', '0000000000', '1111111111', '1234567890'].includes(newPass)) {
+                    alert('Security Policy Failure: Simple or weak passcodes are forbidden.');
                     return;
                 }
                 if (confirmPass && newPass !== confirmPass) {
