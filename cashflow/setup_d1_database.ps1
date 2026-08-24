@@ -11,7 +11,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-Write-Host "✔ Wrangler is authenticated." -ForegroundColor Green
+Write-Host "[OK] Wrangler is authenticated." -ForegroundColor Green
 
 # 2. Create Cloudflare D1 database
 Write-Host "Creating Cloudflare D1 Database 'smartniwas_cashflow'..."
@@ -21,7 +21,7 @@ $dbId = ""
 # Use regex to extract database_id (UUID format matching alphanumeric and hyphens)
 if ($d1Output -match 'database_id = "([a-zA-Z0-9\-]+)"') {
     $dbId = $Matches[1]
-    Write-Host "✔ D1 Database created successfully. ID: $dbId" -ForegroundColor Green
+    Write-Host "[OK] D1 Database created successfully. ID: $dbId" -ForegroundColor Green
 } else {
     Write-Host "Database might already exist, fetching existing ID..."
     $listJson = npx wrangler d1 list --json 2>&1
@@ -30,7 +30,7 @@ if ($d1Output -match 'database_id = "([a-zA-Z0-9\-]+)"') {
         $db = $list | Where-Object { $_.name -eq "smartniwas_cashflow" } | Select-Object -First 1
         if ($db) {
             $dbId = $db.database_id
-            Write-Host "✔ Found existing D1 Database. ID: $dbId" -ForegroundColor Green
+            Write-Host "[OK] Found existing D1 Database. ID: $dbId" -ForegroundColor Green
         }
     }
     
@@ -49,7 +49,7 @@ if (Test-Path "wrangler.toml") {
     $replacement = 'database_id = "{0}"' -f $dbId
     $content = $content -replace 'database_id = "PLACEHOLDER_DATABASE_ID"', $replacement
     Set-Content wrangler.toml $content -NoNewline
-    Write-Host "✔ wrangler.toml updated." -ForegroundColor Green
+    Write-Host "[OK] wrangler.toml updated." -ForegroundColor Green
 } else {
     Write-Error "wrangler.toml not found in the current directory."
     exit 1
@@ -60,7 +60,7 @@ Write-Host "Executing SQL schema migration on Cloudflare D1..."
 if (Test-Path "schema.sql") {
     npx wrangler d1 execute smartniwas_cashflow --file=schema.sql --local
     npx wrangler d1 execute smartniwas_cashflow --file=schema.sql --remote
-    Write-Host "✔ SQL Schema applied successfully." -ForegroundColor Green
+    Write-Host "[OK] SQL Schema applied successfully." -ForegroundColor Green
 } else {
     Write-Error "schema.sql not found."
     exit 1
@@ -71,7 +71,7 @@ $resendKey = Read-Host -Prompt "Please enter your Resend API Key (re_xxxx)"
 if ($resendKey) {
     Write-Host "Setting RESEND_API_KEY secret on Cloudflare Workers..."
     $resendKey | npx wrangler secret put RESEND_API_KEY
-    Write-Host "✔ Secret bound successfully." -ForegroundColor Green
+    Write-Host "[OK] Secret bound successfully." -ForegroundColor Green
 } else {
     Write-Host "Skipped setting Resend API key secret. You can set it manually later."
 }
