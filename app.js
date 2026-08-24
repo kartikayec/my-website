@@ -750,6 +750,23 @@ function updateClock() {
     }
 }
 
+// Inline Feedback Renderer
+function showSecurityStatus(msg, isSuccess) {
+    const box = document.getElementById('security-status-msg');
+    if (!box) return;
+    box.textContent = msg;
+    box.className = `feedback-msg ${isSuccess ? 'feedback-success' : 'feedback-error'}`;
+    box.classList.remove('hidden');
+}
+
+function clearSecurityStatus() {
+    const box = document.getElementById('security-status-msg');
+    if (box) {
+        box.classList.add('hidden');
+        box.textContent = '';
+    }
+}
+
 // Initialize Everything & Bind Verification Gateway
 document.addEventListener('DOMContentLoaded', () => {
     renderDirectory();
@@ -827,6 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const showSettings = () => {
         if (!settingsModal) return;
+        clearSecurityStatus();
         const passcodeSetting = document.getElementById('portal-passcode-setting');
         const passcodeConfirm = document.getElementById('portal-passcode-confirm');
         const mqttHostInput = document.getElementById('mqtt-host');
@@ -869,6 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const hideSettings = () => {
         if (!settingsModal) return;
+        clearSecurityStatus();
         settingsModal.classList.remove('active');
         settingsModal.setAttribute('aria-hidden', 'true');
         if (discoveryActive) {
@@ -916,35 +935,41 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openSettingsBtn) openSettingsBtn.addEventListener('click', showSettings);
     if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', hideSettings);
 
-    // Tab 1: Security Form Handler
+    // Tab 1: Security Form Handler (With Smooth Inline Feedback)
     const securityForm = document.getElementById('security-settings-form');
     if (securityForm) {
         securityForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            clearSecurityStatus();
+
             const passcodeSetting = document.getElementById('portal-passcode-setting');
             const passcodeConfirm = document.getElementById('portal-passcode-confirm');
 
-            if (!passcodeSetting || !passcodeSetting.value.trim()) {
-                alert('Please enter a new master passcode.');
-                return;
-            }
-
-            const newPass = passcodeSetting.value.trim();
+            const newPass = passcodeSetting ? passcodeSetting.value.trim() : '';
             const confirmPass = passcodeConfirm ? passcodeConfirm.value.trim() : '';
 
+            if (!newPass) {
+                showSecurityStatus('❌ Please enter a new master passcode.', false);
+                return;
+            }
             if (newPass.length < 10) {
-                alert('Security Policy Failure: Master passcode must be at least 10 characters long.');
+                showSecurityStatus('❌ Passcode must be at least 10 characters long.', false);
                 return;
             }
             if (['1234', '0000000000', '1111111111', '1234567890'].includes(newPass)) {
-                alert('Security Policy Failure: Default or simple passcodes are forbidden.');
+                showSecurityStatus('❌ Forbidden: Default or weak passcode patterns are not allowed.', false);
                 return;
             }
-            if (confirmPass && newPass !== confirmPass) {
-                alert('Security Policy Failure: New passcode and confirmation do not match.');
+            if (!confirmPass) {
+                showSecurityStatus('❌ Please re-enter your passcode in the confirm box.', false);
+                return;
+            }
+            if (newPass !== confirmPass) {
+                showSecurityStatus('❌ Passcodes do not match. Please re-check both entries.', false);
                 return;
             }
 
+            // Save Passcode
             settings.portalPasscode = newPass;
             localStorage.setItem('smartniwasSettings', JSON.stringify(settings));
 
@@ -952,8 +977,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (passcodeConfirm) passcodeConfirm.value = '';
 
             checkSecurityPolicy();
-            alert('✅ Master Passcode updated successfully!');
-            hideSettings();
+            showSecurityStatus('✅ Master Passcode updated successfully!', true);
+
+            setTimeout(() => {
+                hideSettings();
+            }, 1200);
         });
     }
 
@@ -986,7 +1014,6 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('smartniwasSettings', JSON.stringify(settings));
 
             initializeModules();
-            alert('✅ Connection Settings saved successfully!');
             hideSettings();
         });
     }
