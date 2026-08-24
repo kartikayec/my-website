@@ -24,13 +24,19 @@ Follow these steps in your **Cloudflare Dashboard** to re-route your sub-apps:
 ## Part 2: Deploying the Cash Flow System on Cloudflare Serverless
 
 ### Method A: Automated Setup (Recommended)
-We have provided an automated setup script that executes all setup, binding, migration, and deployment commands for you:
-1. Open your terminal (which starts at `C:\Users\karti`).
-2. Navigate directly to the `cashflow` folder and run the setup script:
-   ```bash
-   cd OneDrive\Antigravity\Projects\smartniwas\cashflow
-   bash setup_d1_database.sh
-   ```
+We have provided automated setup scripts that execute all D1 database provisioning, schema migrations, and API deployments:
+1. Open your terminal.
+2. Navigate directly to the `cashflow` folder and run the appropriate script:
+   - **For Windows PowerShell**:
+     ```powershell
+     cd OneDrive\Antigravity\Projects\smartniwas\cashflow
+     .\setup_d1_database.ps1
+     ```
+   - **For Linux / macOS / Git Bash**:
+     ```bash
+     cd OneDrive\Antigravity\Projects\smartniwas\cashflow
+     bash setup_d1_database.sh
+     ```
 3. Follow the on-screen prompts to input your Resend API Key when prompted.
 
 ---
