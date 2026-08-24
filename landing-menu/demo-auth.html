@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartNiwas Authentication & Identity System - Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Cloudflare Turnstile Captcha Script -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .glow-bg {
+            position: absolute;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(15, 23, 42, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            top: -20%; left: -10%;
+        }
+        .auth-container {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(24px);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .auth-logo {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        .auth-logo span { color: #6366f1; }
+        .auth-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #818cf8;
+            padding: 0.3rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #cbd5e1;
+        }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 0.6rem;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.85rem 1.2rem;
+            border-radius: 0.6rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-primary { background: #6366f1; color: #fff; }
+        .btn-primary:hover { background: #4f46e5; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.15); }
+        .btn-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .banner {
+            padding: 0.75rem 1rem;
+            border-radius: 0.6rem;
+            font-size: 0.85rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .banner-error { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; }
+        .banner-success { background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); color: #4ade80; }
+        .banner-info { background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; }
+        .hidden { display: none !important; }
+        .auth-footer-link {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+        .auth-footer-link a { color: #818cf8; text-decoration: none; }
+        .auth-footer-link a:hover { text-decoration: underline; }
+        .user-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.8rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .user-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .role-badge {
+            background: #6366f1; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 0.4rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-bg"></div>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-logo"><i class="fa-solid fa-shield-halved"></i> smart<span>niwas</span></div>
+            <div class="auth-badge">Centralized Identity Gateway</div>
+        </div>
+
+        <div id="status-banner" class="banner banner-info hidden"></div>
+
+        <!-- 1. LOGIN FORM -->
+        <div id="view-login">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><i class="fa-solid fa-right-to-bracket"></i> Sign In to Account</h3>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email" class="form-label">Email Address (Username):</label>
+                    <input type="email" id="login-email" class="form-input" placeholder="user@smartniwas.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password" class="form-label">Password:</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-key"></i> Log In</button>
+            </form>
+            <div class="auth-footer-link">
+                <a href="#" id="show-forgot-btn">Forgot Password?</a>
+            </div>
+        </div>
+
+        <!-- 2. LOGGED IN USER DASHBOARD CARD -->
+        <div id="view-dashboard" class="hidden">
+            <div class="user-card">
+                <div class="user-card-header">
+                    <div>
+                        <strong id="user-email-display">user@smartniwas.com</strong>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">Active Session Token (HttpOnly Cookie)</div>
+                    </div>
+                    <span id="user-role-badge" class="role-badge">ADMIN</span>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button id="show-invite-btn" class="btn btn-secondary"><i class="fa-solid fa-user-plus"></i> Invite New User (Admin Only)</button>
+                <button id="show-change-pass-btn" class="btn btn-secondary"><i class="fa-solid fa-lock"></i> Change Password</button>
+                <button id="logout-btn" class="btn btn-danger"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</button>
+            </div>
+        </div>
+
+        <!-- 3. ADMIN INVITE USER FORM -->
+        <div id="view-invite" class="hidden">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><i class="fa-solid fa-envelope-open-text"></i> Invite User (Resend Email)</h3>
+            <form id="invite-form">
+                <div class="form-group">
+                    <label for="invite-email" class="form-label">New User Email:</label>
+                    <input type="email" id="invite-email" class="form-input" placeholder="newuser@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="invite-role" class="form-label">Role Assignment:</label>
+                    <select id="invite-role" class="form-select">
+                        <option value="regular">Regular User</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" id="cancel-invite-btn" class="btn btn-secondary">Back</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Send Email Invite</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 4. FORGOT PASSWORD WITH CAPTCHA -->
+        <div id="view-forgot" class="hidden">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><i class="fa-solid fa-robot"></i> Password Reset Verification</h3>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.25rem;">Solve the Captcha challenge below to receive a reset link via email.</p>
+            <form id="forgot-form">
+                <div class="form-group">
+                    <label for="forgot-email" class="form-label">Account Email Address:</label>
+                    <input type="email" id="forgot-email" class="form-input" placeholder="user@smartniwas.com" required>
+                </div>
+                
+                <div class="form-group" style="display: flex; justify-content: center;">
+                    <!-- Cloudflare Turnstile Widget Placeholder -->
+                    <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-theme="dark"></div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem;">
+                    <button type="button" id="cancel-forgot-btn" class="btn btn-secondary">Back</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Send Reset Link</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 5. FORCED / RESET PASSWORD CONFIRMATION FORM -->
+        <div id="view-reset-pass" class="hidden">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;" id="reset-form-title"><i class="fa-solid fa-key"></i> Set New Password</h3>
+            <form id="reset-pass-form">
+                <div class="form-group" id="current-pass-group">
+                    <label for="old-password" class="form-label">Current Password:</label>
+                    <input type="password" id="old-password" class="form-input" placeholder="••••••••••••">
+                </div>
+                <div class="form-group">
+                    <label for="new-password" class="form-label">New Password (10+ characters):</label>
+                    <input type="password" id="new-password" class="form-input" placeholder="••••••••••••" required minlength="10">
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password" class="form-label">Confirm New Password:</label>
+                    <input type="password" id="confirm-password" class="form-input" placeholder="••••••••••••" required minlength="10">
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save New Password</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script src="/js/auth-sdk/smartniwas-auth-sdk.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const statusBanner = document.getElementById('status-banner');
+            
+            const viewLogin = document.getElementById('view-login');
+            const viewDashboard = document.getElementById('view-dashboard');
+            const viewInvite = document.getElementById('view-invite');
+            const viewForgot = document.getElementById('view-forgot');
+            const viewResetPass = document.getElementById('view-reset-pass');
+
+            const loginForm = document.getElementById('login-form');
+            const inviteForm = document.getElementById('invite-form');
+            const forgotForm = document.getElementById('forgot-form');
+            const resetPassForm = document.getElementById('reset-pass-form');
+
+            const userEmailDisplay = document.getElementById('user-email-display');
+            const userRoleBadge = document.getElementById('user-role-badge');
+
+            function showBanner(msg, type = 'info') {
+                statusBanner.textContent = msg;
+                statusBanner.className = `banner banner-${type}`;
+                statusBanner.classList.remove('hidden');
+            }
+
+            function hideBanner() {
+                statusBanner.classList.add('hidden');
+            }
+
+            function switchView(target) {
+                hideBanner();
+                [viewLogin, viewDashboard, viewInvite, viewForgot, viewResetPass].forEach(v => v.classList.add('hidden'));
+                target.classList.remove('hidden');
+            }
+
+            // Check URL parameters for ?invite= or ?reset=
+            const urlParams = new URLSearchParams(window.location.search);
+            const resetToken = urlParams.get('reset') || urlParams.get('invite');
+
+            if (resetToken) {
+                switchView(viewResetPass);
+                document.getElementById('current-pass-group').classList.add('hidden');
+                document.getElementById('reset-form-title').innerHTML = '<i class="fa-solid fa-key"></i> Accept Invitation & Set Password';
+            } else {
+                // Initialize Session Check
+                const user = await SmartNiwasAuth.init({
+                    onAuthSuccess: (u) => {
+                        userEmailDisplay.textContent = u.email;
+                        userRoleBadge.textContent = u.role.toUpperCase();
+                        
+                        if (u.mustChangePassword) {
+                            showBanner('⚠️ Password change required before proceeding.', 'error');
+                            switchView(viewResetPass);
+                            document.getElementById('current-pass-group').classList.add('hidden');
+                        } else {
+                            switchView(viewDashboard);
+                        }
+                    },
+                    onAuthRequired: () => {
+                        switchView(viewLogin);
+                    }
+                });
+            }
+
+            // Login
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                hideBanner();
+                const email = document.getElementById('login-email').value;
+                const pass = document.getElementById('login-password').value;
+                try {
+                    const data = await SmartNiwasAuth.login(email, pass);
+                    showBanner(`Welcome back, ${data.user.email}!`, 'success');
+                } catch (err) {
+                    showBanner(`❌ ${err.message}`, 'error');
+                }
+            });
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                await SmartNiwasAuth.logout();
+                showBanner('Logged out successfully.', 'info');
+            });
+
+            // Navigation
+            document.getElementById('show-forgot-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                switchView(viewForgot);
+            });
+            document.getElementById('cancel-forgot-btn').addEventListener('click', () => switchView(viewLogin));
+            
+            document.getElementById('show-invite-btn').addEventListener('click', () => switchView(viewInvite));
+            document.getElementById('cancel-invite-btn').addEventListener('click', () => switchView(viewDashboard));
+            
+            document.getElementById('show-change-pass-btn').addEventListener('click', () => {
+                switchView(viewResetPass);
+                document.getElementById('current-pass-group').classList.remove('hidden');
+            });
+
+            // Admin Invite
+            inviteForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('invite-email').value;
+                const role = document.getElementById('invite-role').value;
+                try {
+                    const data = await SmartNiwasAuth.inviteUser(email, role);
+                    showBanner(`✅ Invite email sent to ${email} via Resend.com!`, 'success');
+                    inviteForm.reset();
+                    setTimeout(() => switchView(viewDashboard), 2000);
+                } catch (err) {
+                    showBanner(`❌ ${err.message}`, 'error');
+                }
+            });
+
+            // Forgot Password (Captcha)
+            forgotForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('forgot-email').value;
+                const turnstileInput = document.querySelector('[name="cf-turnstile-response"]');
+                const token = turnstileInput ? turnstileInput.value : '';
+
+                try {
+                    await SmartNiwasAuth.requestPasswordReset(email, token);
+                    showBanner(`✅ Password reset link dispatched to ${email}!`, 'success');
+                    forgotForm.reset();
+                } catch (err) {
+                    showBanner(`❌ ${err.message}`, 'error');
+                }
+            });
+
+            // Password Reset / Change Submission
+            resetPassForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const oldPass = document.getElementById('old-password').value;
+                const newPass = document.getElementById('new-password').value;
+                const confirmPass = document.getElementById('confirm-password').value;
+
+                try {
+                    if (resetToken) {
+                        await SmartNiwasAuth.resetPassword(resetToken, newPass, confirmPass);
+                        showBanner('✅ Password updated successfully! Please log in.', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/demo-auth';
+                        }, 1500);
+                    } else {
+                        await SmartNiwasAuth.changePassword(oldPass, newPass, confirmPass);
+                        showBanner('✅ Password updated successfully!', 'success');
+                        setTimeout(() => switchView(viewDashboard), 1500);
+                    }
+                } catch (err) {
+                    showBanner(`❌ ${err.message}`, 'error');
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
