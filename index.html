@@ -39,7 +39,10 @@
                 <span>smart<strong>niwas</strong></span>
             </h1>
             <div class="header-controls">
-                <button id="open-settings-btn" class="settings-btn" aria-label="Open Settings">
+                <button id="lock-portal-btn" class="settings-btn" aria-label="Lock Portal Session" title="Lock Session">
+                    <i class="fa-solid fa-lock"></i>
+                </button>
+                <button id="open-settings-btn" class="settings-btn" aria-label="Open Settings" title="Settings">
                     <i class="fa-solid fa-gear"></i>
                 </button>
                 <div id="live-clock" class="live-clock">Loading time...</div>
@@ -127,8 +130,15 @@
                     
                     <!-- Connection Tab -->
                     <div id="tab-connection" class="tab-panel">
+                        <!-- Security Access Passcode -->
+                        <div class="settings-group-title">Portal Security Access</div>
+                        <div class="form-group">
+                            <label for="portal-passcode-setting" class="form-label">Master Passcode / PIN:</label>
+                            <input type="password" id="portal-passcode-setting" placeholder="Default: 1234">
+                        </div>
+
                         <!-- MQTT Broker Section -->
-                        <div class="settings-group-title">MQTT IoT Broker Settings</div>
+                        <div class="settings-group-title divider">MQTT IoT Broker Settings</div>
                         <div class="form-group">
                             <label for="mqtt-host" class="form-label">Broker WebSocket URL:</label>
                             <input type="url" id="mqtt-host" placeholder="wss://mqtt.smartniwas.com" required>
@@ -198,20 +208,33 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="new-dev-topic" class="form-label">MQTT Topic / Path:</label>
-                                <input type="text" id="new-dev-topic" placeholder="e.g. smartniwas/switch/livingroom_light">
+                            <!-- Switch-specific fields -->
+                            <div id="switch-fields">
+                                <div class="form-group">
+                                    <label for="new-dev-cmd-topic" class="form-label">Command Topic (publish):</label>
+                                    <input type="text" id="new-dev-cmd-topic" placeholder="e.g. cmnd/switch1/POWER">
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-dev-stat-topic" class="form-label">State Topic (subscribe):</label>
+                                    <input type="text" id="new-dev-stat-topic" placeholder="e.g. stat/switch1/POWER">
+                                </div>
                             </div>
                             
                             <!-- Sensor-specific fields -->
-                            <div id="sensor-fields" class="form-row hidden">
-                                <div class="form-group half-width">
-                                    <label for="new-dev-unit" class="form-label">Unit of Measure:</label>
-                                    <input type="text" id="new-dev-unit" placeholder="e.g. °C, %, W">
+                            <div id="sensor-fields" class="hidden">
+                                <div class="form-group">
+                                    <label for="new-dev-topic" class="form-label">Sensor Topic (subscribe):</label>
+                                    <input type="text" id="new-dev-topic" placeholder="e.g. smartniwas/sensor/temperature">
                                 </div>
-                                <div class="form-group half-width">
-                                    <label for="new-dev-icon" class="form-label">FontAwesome Icon:</label>
-                                    <input type="text" id="new-dev-icon" placeholder="e.g. fa-droplet, fa-bolt">
+                                <div class="form-row">
+                                    <div class="form-group half-width">
+                                        <label for="new-dev-unit" class="form-label">Unit of Measure:</label>
+                                        <input type="text" id="new-dev-unit" placeholder="e.g. °C, %, W">
+                                    </div>
+                                    <div class="form-group half-width">
+                                        <label for="new-dev-icon" class="form-label">FontAwesome Icon:</label>
+                                        <input type="text" id="new-dev-icon" placeholder="e.g. fa-droplet, fa-bolt">
+                                    </div>
                                 </div>
                             </div>
 
@@ -254,6 +277,32 @@
                     <button type="button" id="cancel-settings-btn" class="btn btn-secondary">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Connection</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Glassmorphic Authentication Gateway Modal -->
+    <div id="auth-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="auth-modal-title">
+        <div class="modal-content auth-modal-content">
+            <div class="auth-icon-wrapper">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2 id="auth-modal-title"><i class="fa-solid fa-house-lock"></i> SmartNiwas Verification</h2>
+            <p class="auth-subtitle">Enter your household passcode / master PIN to unlock the member portal.</p>
+            
+            <form id="auth-form">
+                <div id="auth-error-banner" class="auth-error-banner hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i> Invalid Passcode. Please try again.
+                </div>
+                
+                <div class="form-group">
+                    <label for="portal-passcode-input" class="form-label">Master PIN / Passcode:</label>
+                    <input type="password" id="portal-passcode-input" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-key"></i> Unlock Portal
+                </button>
             </form>
         </div>
     </div>

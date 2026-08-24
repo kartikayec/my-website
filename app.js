@@ -1,101 +1,92 @@
-// 1. Initial Member Data
+// 1. Initial Member Data (Hardened Production Directory)
 const members = [
-    { name: "Kartikay", email: "kartikay@smartniwas.com", status: "online", desc: "SysAdmin" },
-    { name: "Aditi", email: "aditi@smartniwas.com", status: "busy", desc: "UX Design" },
-    { name: "Rahul", email: "rahul@smartniwas.com", status: "away", desc: "Software Dev" },
-    { name: "Priya", email: "priya@smartniwas.com", status: "online", desc: "Operations" },
+    { name: "Kartikay", email: "kartikay@smartniwas.com", desc: "System Administrator" }
 ];
 
-// Render Directory
+// Helper: HTML Escaper for XSS Prevention
+function escapeHTML(str) {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// Render Member Directory Safely
 function renderDirectory() {
     const grid = document.getElementById('member-grid');
+    if (!grid) return;
     grid.innerHTML = '';
     
-    members.forEach((m, index) => {
+    members.forEach((m) => {
         const card = document.createElement('div');
         card.className = 'member-card';
-        card.innerHTML = `
-            <div class="member-info">
-                <h3>${m.name}</h3>
-                <p>${m.desc}</p>
-                <a href="mailto:${m.email}" class="email-btn"><i class="fa-regular fa-envelope"></i> ${m.email}</a>
-            </div>
-            <div class="member-status">
-                <span class="status-badge status-${m.status}" onclick="toggleStatus(${index})">
-                    ${m.status.toUpperCase()}
-                </span>
-            </div>
-        `;
+        
+        const info = document.createElement('div');
+        info.className = 'member-info';
+        
+        const h3 = document.createElement('h3');
+        h3.textContent = m.name;
+        
+        const p = document.createElement('p');
+        p.textContent = m.desc;
+        
+        const a = document.createElement('a');
+        a.href = `mailto:${encodeURIComponent(m.email)}`;
+        a.className = 'email-btn';
+        a.innerHTML = `<i class="fa-regular fa-envelope"></i> ${escapeHTML(m.email)}`;
+        
+        info.appendChild(h3);
+        info.appendChild(p);
+        info.appendChild(a);
+        
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'member-status';
+        statusDiv.innerHTML = `<span class="status-badge status-online">MEMBER</span>`;
+        
+        card.appendChild(info);
+        card.appendChild(statusDiv);
         grid.appendChild(card);
     });
 }
 
-// Toggle Status (Interactive demonstration)
-function toggleStatus(index) {
-    const statuses = ['online', 'away', 'busy'];
-    const current = statuses.indexOf(members[index].status);
-    members[index].status = statuses[(current + 1) % statuses.length];
-    renderDirectory();
-}
+// 2. Shared Notice Board (LocalStorage with XSS Prevention)
+let notes = JSON.parse(localStorage.getItem('familyNotes')) || [];
 
-// 2. Local Storage Notice Board
-let notes = JSON.parse(localStorage.getItem('familyNotes')) || [
-    { id: 1, text: "Welcome to the new SmartNiwas portal! Feel free to leave a note." }
-];
+function saveNotes() {
+    localStorage.setItem('familyNotes', JSON.stringify(notes));
+}
 
 function renderNotes() {
     const notesGrid = document.getElementById('notes-grid');
+    if (!notesGrid) return;
     notesGrid.innerHTML = '';
     
+    if (notes.length === 0) {
+        notesGrid.innerHTML = '<div style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1.5rem; width: 100%;">No active notices. Click "+ Add Note" to post on the board.</div>';
+        return;
+    }
+
     notes.forEach(note => {
         const div = document.createElement('div');
         div.className = 'note';
         div.setAttribute('data-id', note.id);
-        div.innerHTML = `
-            <button class="note-close" onclick="deleteNote(${note.id})" aria-label="Delete note">&times;</button>
-            <p>${note.text}</p>
-        `;
+        
+        const btn = document.createElement('button');
+        btn.className = 'note-close';
+        btn.setAttribute('aria-label', 'Delete note');
+        btn.innerHTML = '&times;';
+        btn.onclick = () => deleteNote(note.id);
+        
+        const p = document.createElement('p');
+        p.textContent = note.text;
+        
+        div.appendChild(btn);
+        div.appendChild(p);
         notesGrid.appendChild(div);
     });
-}
-
-
-// 3. Settings & Modules State
-let settings = JSON.parse(localStorage.getItem('smartniwasSettings')) || {
-    mqttHost: "",
-    mqttUser: "",
-    mqttPass: "",
-    cctvEnabled: false,
-    nvrHost: "",
-    nvrUser: "",
-    nvrPass: "",
-    nvrChannels: "101,201"
-};
-
-let mqttClient = null;
-let cctvIntervals = [];
-
-// Device Inventory Defaults
-const defaultDevices = {
-    switches: [
-        { id: "living-light", name: "Living Room Light", topic: "smartniwas/switch/livingroom_light", state: "OFF" },
-        { id: "gate-lock", name: "Main Gate Lock", topic: "smartniwas/switch/gate_lock", state: "OFF" }
-    ],
-    sensors: [
-        { id: "home-temp", name: "Temperature", topic: "smartniwas/sensor/temperature", value: "--", unit: "°C", icon: "fa-thermometer-half" },
-        { id: "home-hum", name: "Humidity", topic: "smartniwas/sensor/humidity", value: "--", unit: "%", icon: "fa-droplet" }
-    ]
-};
-
-let iotDevices = JSON.parse(localStorage.getItem('smartniwasDevices')) || defaultDevices;
-
-// Topic discovery state
-let discoveryActive = false;
-let discoveredTopics = [];
-
-// Render Notice Board Notes
-function saveNotes() {
-    localStorage.setItem('familyNotes', JSON.stringify(notes));
 }
 
 window.deleteNote = function(id) {
@@ -113,22 +104,95 @@ window.deleteNote = function(id) {
         saveNotes();
         renderNotes();
     }
+};
+
+// 3. Settings & Storage State
+let settings = JSON.parse(localStorage.getItem('smartniwasSettings')) || {
+    portalPasscode: "1234",
+    mqttHost: "",
+    mqttUser: "",
+    mqttPass: "",
+    cctvEnabled: false,
+    nvrHost: "",
+    nvrUser: "",
+    nvrPass: "",
+    nvrChannels: "101,201"
+};
+
+// Ensure fallback passcode exists
+if (!settings.portalPasscode) {
+    settings.portalPasscode = "1234";
 }
 
-// Attach toggleStatus to window explicitly for clarity
-window.toggleStatus = function(index) {
-    const statuses = ['online', 'away', 'busy'];
-    const current = statuses.indexOf(members[index].status);
-    members[index].status = statuses[(current + 1) % statuses.length];
-    renderDirectory();
-}
+let mqttClient = null;
+let cctvIntervals = [];
+
+// Device Inventory Defaults (Clean & Hardened)
+const defaultDevices = {
+    switches: [],
+    sensors: []
+};
+
+let iotDevices = JSON.parse(localStorage.getItem('smartniwasDevices')) || defaultDevices;
 
 function saveDevices() {
     localStorage.setItem('smartniwasDevices', JSON.stringify(iotDevices));
 }
 
-// 4. Modules Setup and Connection Logic
+// Helper function to resolve switch command & state topics with Tasmota defaults
+function getSwitchTopics(sw) {
+    const cmdTopic = sw.cmdTopic || sw.topic || `cmnd/${sw.id}/POWER`;
+    const statTopic = sw.statTopic || sw.topic || `stat/${sw.id}/POWER`;
+    return { cmdTopic, statTopic };
+}
+
+// Topic discovery state
+let discoveryActive = false;
+let discoveredTopics = [];
+
+// 4. Independent Authentication Module Gateway
+function checkPortalAuth() {
+    const isAuth = sessionStorage.getItem('smartniwasPortalAuth') === 'true';
+    const authModal = document.getElementById('auth-modal');
+    
+    if (!isAuth) {
+        document.body.classList.add('portal-locked');
+        if (authModal) {
+            authModal.classList.add('active');
+            authModal.setAttribute('aria-hidden', 'false');
+            const passInput = document.getElementById('portal-passcode-input');
+            if (passInput) setTimeout(() => passInput.focus(), 150);
+        }
+        // Stop active background streams while locked
+        if (mqttClient) {
+            mqttClient.end();
+            mqttClient = null;
+        }
+        cctvIntervals.forEach(clearInterval);
+        cctvIntervals = [];
+    } else {
+        document.body.classList.remove('portal-locked');
+        if (authModal) {
+            authModal.classList.remove('active');
+            authModal.setAttribute('aria-hidden', 'true');
+        }
+        // Initialize active modules upon successful authentication
+        initializeModules();
+    }
+}
+
+window.lockPortal = function() {
+    sessionStorage.removeItem('smartniwasPortalAuth');
+    checkPortalAuth();
+};
+
+// 5. Modules Setup and Connection Logic
 function initializeModules() {
+    // Prevent module setup if portal is locked
+    if (sessionStorage.getItem('smartniwasPortalAuth') !== 'true') {
+        return;
+    }
+
     // 1. MQTT Section Setup
     if (settings.mqttHost) {
         setupMQTT();
@@ -152,6 +216,7 @@ function initializeModules() {
 
 function renderIoTPlaceholder() {
     const grid = document.getElementById('iot-grid');
+    if (!grid) return;
     grid.innerHTML = `
         <div class="iot-placeholder-card">
             <i class="fa-solid fa-circle-info"></i>
@@ -162,6 +227,7 @@ function renderIoTPlaceholder() {
 
 function renderCCTVPlaceholder() {
     const grid = document.getElementById('cctv-grid');
+    if (!grid) return;
     grid.innerHTML = `
         <div class="cctv-placeholder-card">
             <i class="fa-solid fa-video-slash"></i>
@@ -177,7 +243,6 @@ function setupMQTT() {
 
     renderIoTGrid();
 
-    console.log("Connecting to MQTT Broker:", settings.mqttHost);
     const options = {
         reconnectPeriod: 5000,
         connectTimeout: 30 * 1000
@@ -189,19 +254,18 @@ function setupMQTT() {
         mqttClient = mqtt.connect(settings.mqttHost, options);
 
         mqttClient.on('connect', () => {
-            console.log("Connected to MQTT Broker successfully!");
-            
-            // Subscribe to all switch state and sensor topics
             iotDevices.switches.forEach(sw => {
-                mqttClient.subscribe(sw.topic);
+                const { statTopic, cmdTopic } = getSwitchTopics(sw);
+                if (statTopic) mqttClient.subscribe(statTopic);
+                if (cmdTopic && cmdTopic !== statTopic) mqttClient.subscribe(cmdTopic);
             });
             iotDevices.sensors.forEach(sen => {
-                mqttClient.subscribe(sen.topic);
+                if (sen.topic) mqttClient.subscribe(sen.topic);
             });
 
-            // If discovery is active, subscribe to discovery wildcard
             if (discoveryActive) {
-                const wildcard = document.getElementById('discovery-wildcard').value.trim() || '#';
+                const wildcardInput = document.getElementById('discovery-wildcard');
+                const wildcard = wildcardInput ? wildcardInput.value.trim() || '#' : '#';
                 mqttClient.subscribe(wildcard);
                 updateDiscoveryBanner("Scanning...", "status-scanning");
             }
@@ -210,80 +274,129 @@ function setupMQTT() {
         mqttClient.on('message', (topic, message) => {
             const payload = message.toString();
 
-            // 1. Discovery Mode handler
             if (discoveryActive) {
-                const isConfigured = iotDevices.switches.some(s => s.topic === topic) || 
-                                     iotDevices.sensors.some(s => s.topic === topic);
+                const isConfigured = iotDevices.switches.some(s => {
+                    const { cmdTopic, statTopic } = getSwitchTopics(s);
+                    return statTopic === topic || cmdTopic === topic || s.topic === topic;
+                }) || iotDevices.sensors.some(s => s.topic === topic);
                 if (!isConfigured && !discoveredTopics.includes(topic)) {
                     discoveredTopics.push(topic);
                     renderDiscoveryResults();
                 }
             }
 
-            // 2. Device Update Handlers
-            const sw = iotDevices.switches.find(s => s.topic === topic);
+            const sw = iotDevices.switches.find(s => {
+                const { cmdTopic, statTopic } = getSwitchTopics(s);
+                return statTopic === topic || cmdTopic === topic || s.topic === topic;
+            });
             if (sw) {
-                sw.state = payload;
+                let cleanPayload = payload.trim().toUpperCase();
+                if (payload.startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(payload);
+                        if (parsed.POWER) cleanPayload = parsed.POWER.toUpperCase();
+                    } catch (e) {}
+                }
+                sw.state = cleanPayload;
                 const toggleInput = document.getElementById(`toggle-${sw.id}`);
                 const statusLabel = document.getElementById(`status-label-${sw.id}`);
-                if (toggleInput) toggleInput.checked = (payload === 'ON');
-                if (statusLabel) statusLabel.innerText = payload;
+                if (toggleInput) toggleInput.checked = (cleanPayload === 'ON');
+                if (statusLabel) statusLabel.textContent = cleanPayload;
             }
 
             const sen = iotDevices.sensors.find(s => s.topic === topic);
             if (sen) {
                 sen.value = payload;
                 const valElem = document.getElementById(`val-${sen.id}`);
-                if (valElem) valElem.innerText = `${payload}${sen.unit}`;
+                if (valElem) valElem.textContent = `${payload}${sen.unit || ''}`;
             }
         });
 
-        mqttClient.on('error', (err) => {
-            console.error("MQTT Error:", err);
+        mqttClient.on('error', () => {
+            // Silently handle MQTT error without leaking details to browser log
         });
 
     } catch (e) {
-        console.error("Failed to initialize MQTT connection client:", e);
+        // Initialization failure fallback
     }
 }
 
 function renderIoTGrid() {
     const grid = document.getElementById('iot-grid');
+    if (!grid) return;
     grid.innerHTML = '';
 
     if (iotDevices.sensors.length === 0 && iotDevices.switches.length === 0) {
-        grid.innerHTML = '<div style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; width: 100%; padding: 2rem;">No devices configured. Click the gear icon in the header to add devices.</div>';
+        grid.innerHTML = '<div style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; width: 100%; padding: 2rem;">No smart devices configured. Use Portal Settings to add custom switches or sensors.</div>';
         return;
     }
 
-    // Render Sensors
+    // Render Sensors safely
     iotDevices.sensors.forEach(sen => {
         const card = document.createElement('div');
         card.className = 'sensor-card';
-        card.innerHTML = `
-            <div class="sensor-icon"><i class="fa-solid ${sen.icon || 'fa-microchip'}"></i></div>
-            <div class="sensor-details">
-                <div class="sensor-value" id="val-${sen.id}">${sen.value}${sen.unit || ''}</div>
-                <div class="sensor-label">${sen.name}</div>
-            </div>
-        `;
+        
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'sensor-icon';
+        const safeIcon = (sen.icon && /^fa-[a-z0-9-]+$/.test(sen.icon)) ? sen.icon : 'fa-microchip';
+        iconDiv.innerHTML = `<i class="fa-solid ${escapeHTML(safeIcon)}"></i>`;
+        
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'sensor-details';
+        
+        const valDiv = document.createElement('div');
+        valDiv.className = 'sensor-value';
+        valDiv.id = `val-${sen.id}`;
+        valDiv.textContent = `${sen.value}${sen.unit || ''}`;
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'sensor-label';
+        labelDiv.textContent = sen.name;
+        
+        detailsDiv.appendChild(valDiv);
+        detailsDiv.appendChild(labelDiv);
+        
+        card.appendChild(iconDiv);
+        card.appendChild(detailsDiv);
         grid.appendChild(card);
     });
 
-    // Render Switches
+    // Render Switches safely
     iotDevices.switches.forEach(sw => {
         const card = document.createElement('div');
         card.className = 'switch-card';
-        card.innerHTML = `
-            <div class="switch-info">
-                <h4>${sw.name}</h4>
-                <p class="switch-status-label" id="status-label-${sw.id}">${sw.state}</p>
-            </div>
-            <label class="switch-toggle">
-                <input type="checkbox" id="toggle-${sw.id}" ${sw.state === 'ON' ? 'checked' : ''} onchange="toggleSwitch('${sw.id}')">
-                <span class="slider"></span>
-            </label>
-        `;
+        
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'switch-info';
+        
+        const h4 = document.createElement('h4');
+        h4.textContent = sw.name;
+        
+        const p = document.createElement('p');
+        p.className = 'switch-status-label';
+        p.id = `status-label-${sw.id}`;
+        p.textContent = sw.state || 'OFF';
+        
+        infoDiv.appendChild(h4);
+        infoDiv.appendChild(p);
+        
+        const label = document.createElement('label');
+        label.className = 'switch-toggle';
+        
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = `toggle-${sw.id}`;
+        input.checked = (sw.state === 'ON');
+        input.onchange = () => toggleSwitch(sw.id);
+        
+        const span = document.createElement('span');
+        span.className = 'slider';
+        
+        label.appendChild(input);
+        label.appendChild(span);
+        
+        card.appendChild(infoDiv);
+        card.appendChild(label);
         grid.appendChild(card);
     });
 }
@@ -292,13 +405,28 @@ window.toggleSwitch = function(id) {
     const sw = iotDevices.switches.find(s => s.id === id);
     if (sw && mqttClient && mqttClient.connected) {
         const toggleInput = document.getElementById(`toggle-${id}`);
-        const newState = toggleInput.checked ? 'ON' : 'OFF';
+        const newState = toggleInput ? (toggleInput.checked ? 'ON' : 'OFF') : 'OFF';
+        const { cmdTopic } = getSwitchTopics(sw);
         
-        console.log(`Publishing command: [${sw.topic}] -> ${newState}`);
-        mqttClient.publish(sw.topic, newState, { retain: true });
+        mqttClient.publish(cmdTopic, newState, { retain: false });
         
-        document.getElementById(`status-label-${id}`).innerText = newState;
+        const statusLabel = document.getElementById(`status-label-${id}`);
+        if (statusLabel) statusLabel.textContent = newState;
     }
+};
+
+// CCTV NVR Safe Helper
+function getCctvImageUrl(channel) {
+    if (!settings.nvrHost) return '';
+    let hostClean = settings.nvrHost.replace(/\/+$/, '');
+    let urlBase = hostClean.replace(/^https?:\/\//, '');
+    let protocol = hostClean.startsWith('https') ? 'https://' : 'http://';
+    
+    let credentials = '';
+    if (settings.nvrUser && settings.nvrPass) {
+        credentials = `${encodeURIComponent(settings.nvrUser)}:${encodeURIComponent(settings.nvrPass)}@`;
+    }
+    return `${protocol}${credentials}${urlBase}/ISAPI/Streaming/channels/${encodeURIComponent(channel)}/picture`;
 }
 
 function setupCCTV() {
@@ -306,7 +434,13 @@ function setupCCTV() {
     cctvIntervals = [];
 
     const grid = document.getElementById('cctv-grid');
+    if (!grid) return;
     grid.innerHTML = '';
+
+    if (!settings.cctvEnabled || !settings.nvrHost) {
+        renderCCTVPlaceholder();
+        return;
+    }
 
     const channels = settings.nvrChannels.split(',').map(c => c.trim()).filter(c => c.length > 0);
 
@@ -314,45 +448,61 @@ function setupCCTV() {
         const card = document.createElement('div');
         card.className = 'cctv-card';
         
-        let urlBase = settings.nvrHost.replace('https://', '').replace('http://', '');
-        let credentials = '';
-        if (settings.nvrUser && settings.nvrPass) {
-            credentials = `${encodeURIComponent(settings.nvrUser)}:${encodeURIComponent(settings.nvrPass)}@`;
-        }
-        let protocol = settings.nvrHost.startsWith('https') ? 'https://' : 'http://';
-        let imageUrl = `${protocol}${credentials}${urlBase}/ISAPI/Streaming/channels/${channel}/picture`;
-
-        card.innerHTML = `
-            <div class="cctv-feed-container" onclick="openCameraStream('${channel}')" style="cursor: pointer;">
-                <img class="cctv-feed-img" id="cam-${channel}" src="" alt="Camera ${channel}" onerror="handleCamError('${channel}')">
-                <div class="cctv-feed-placeholder" id="cam-place-${channel}">
-                    <i class="fa-solid fa-circle-notch"></i>
-                    <span>Loading Camera Feed...</span>
-                </div>
-                <div class="cctv-feed-overlay">
-                    <span class="cctv-status-dot"></span>
-                    <span>CAM ${channel}</span>
-                </div>
-            </div>
-            <div class="cctv-meta">
-                <span class="cctv-name">Channel ${channel}</span>
-                <button class="cctv-refresh-btn" onclick="refreshCamera('${channel}'); event.stopPropagation();" aria-label="Refresh Camera">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                </button>
-            </div>
-        `;
+        const container = document.createElement('div');
+        container.className = 'cctv-feed-container';
+        container.style.cursor = 'pointer';
+        container.onclick = () => openCameraStream(channel);
+        
+        const img = document.createElement('img');
+        img.className = 'cctv-feed-img';
+        img.id = `cam-${channel}`;
+        img.alt = `Camera ${channel}`;
+        img.onerror = () => handleCamError(channel);
+        
+        const placeholder = document.createElement('div');
+        placeholder.className = 'cctv-feed-placeholder';
+        placeholder.id = `cam-place-${channel}`;
+        placeholder.innerHTML = `<i class="fa-solid fa-circle-notch"></i><span>Loading Camera Feed...</span>`;
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'cctv-feed-overlay';
+        overlay.innerHTML = `<span class="cctv-status-dot"></span><span>CAM ${escapeHTML(channel)}</span>`;
+        
+        container.appendChild(img);
+        container.appendChild(placeholder);
+        container.appendChild(overlay);
+        
+        const meta = document.createElement('div');
+        meta.className = 'cctv-meta';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'cctv-name';
+        nameSpan.textContent = `Channel ${channel}`;
+        
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'cctv-refresh-btn';
+        refreshBtn.setAttribute('aria-label', 'Refresh Camera');
+        refreshBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i>`;
+        refreshBtn.onclick = (e) => {
+            e.stopPropagation();
+            refreshCamera(channel);
+        };
+        
+        meta.appendChild(nameSpan);
+        meta.appendChild(refreshBtn);
+        
+        card.appendChild(container);
+        card.appendChild(meta);
         grid.appendChild(card);
 
-        const img = card.querySelector(`#cam-${channel}`);
-        const placeholder = card.querySelector(`#cam-place-${channel}`);
-        
         img.onload = () => {
             if (placeholder) placeholder.classList.add('hidden');
         };
 
         const updateImage = () => {
-            if (settings.cctvEnabled) {
-                img.src = `${imageUrl}?t=${Date.now()}`;
+            if (settings.cctvEnabled && sessionStorage.getItem('smartniwasPortalAuth') === 'true') {
+                const baseUrl = getCctvImageUrl(channel);
+                img.src = `${baseUrl}?t=${Date.now()}`;
             }
         };
 
@@ -371,38 +521,29 @@ window.handleCamError = function(channel) {
             <span style="color: #f87171;">Feed Offline</span>
         `;
     }
-}
+};
 
 window.refreshCamera = function(channel) {
     const img = document.getElementById(`cam-${channel}`);
     const placeholder = document.getElementById(`cam-place-${channel}`);
     if (img) {
         if (placeholder) placeholder.classList.remove('hidden');
-        let urlBase = settings.nvrHost.replace('https://', '').replace('http://', '');
-        let credentials = '';
-        if (settings.nvrUser && settings.nvrPass) {
-            credentials = `${encodeURIComponent(settings.nvrUser)}:${encodeURIComponent(settings.nvrPass)}@`;
-        }
-        let protocol = settings.nvrHost.startsWith('https') ? 'https://' : 'http://';
-        let imageUrl = `${protocol}${credentials}${urlBase}/ISAPI/Streaming/channels/${channel}/picture`;
-        img.src = `${imageUrl}?t=${Date.now()}`;
+        const baseUrl = getCctvImageUrl(channel);
+        img.src = `${baseUrl}?t=${Date.now()}`;
     }
-}
+};
 
 window.openCameraStream = function(channel) {
-    let urlBase = settings.nvrHost.replace('https://', '').replace('http://', '');
-    let credentials = '';
-    if (settings.nvrUser && settings.nvrPass) {
-        credentials = `${encodeURIComponent(settings.nvrUser)}:${encodeURIComponent(settings.nvrPass)}@`;
+    const baseUrl = getCctvImageUrl(channel);
+    if (baseUrl) {
+        window.open(baseUrl, '_blank');
     }
-    let protocol = settings.nvrHost.startsWith('https') ? 'https://' : 'http://';
-    let imageUrl = `${protocol}${credentials}${urlBase}/ISAPI/Streaming/channels/${channel}/picture`;
-    window.open(imageUrl, '_blank');
-}
+};
 
-// 5. Device Manager Inventory CRUD
+// 6. Device Manager Inventory CRUD
 function renderDeviceList() {
     const list = document.getElementById('device-list');
+    if (!list) return;
     list.innerHTML = '';
 
     if (iotDevices.switches.length === 0 && iotDevices.sensors.length === 0) {
@@ -413,30 +554,73 @@ function renderDeviceList() {
     iotDevices.sensors.forEach(sen => {
         const item = document.createElement('div');
         item.className = 'device-item';
-        item.innerHTML = `
-            <div class="device-item-info">
-                <span class="device-item-name">${sen.name} <span style="font-size:0.75rem; font-weight:normal; opacity:0.75;">(Sensor)</span></span>
-                <div class="device-item-meta">Topic: ${sen.topic}</div>
-            </div>
-            <button type="button" class="device-delete-btn" onclick="deleteDevice('sensor', '${sen.id}')" aria-label="Delete sensor">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
-        `;
+        
+        const info = document.createElement('div');
+        info.className = 'device-item-info';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'device-item-name';
+        nameSpan.textContent = sen.name + ' ';
+        const typeSpan = document.createElement('span');
+        typeSpan.style.fontSize = '0.75rem';
+        typeSpan.style.fontWeight = 'normal';
+        typeSpan.style.opacity = '0.75';
+        typeSpan.textContent = '(Sensor)';
+        nameSpan.appendChild(typeSpan);
+        
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'device-item-meta';
+        metaDiv.textContent = `Topic: ${sen.topic}`;
+        
+        info.appendChild(nameSpan);
+        info.appendChild(metaDiv);
+        
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'device-delete-btn';
+        delBtn.setAttribute('aria-label', 'Delete sensor');
+        delBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i>`;
+        delBtn.onclick = () => deleteDevice('sensor', sen.id);
+        
+        item.appendChild(info);
+        item.appendChild(delBtn);
         list.appendChild(item);
     });
 
     iotDevices.switches.forEach(sw => {
+        const { cmdTopic, statTopic } = getSwitchTopics(sw);
         const item = document.createElement('div');
         item.className = 'device-item';
-        item.innerHTML = `
-            <div class="device-item-info">
-                <span class="device-item-name">${sw.name} <span style="font-size:0.75rem; font-weight:normal; opacity:0.75;">(Switch)</span></span>
-                <div class="device-item-meta">Topic: ${sw.topic}</div>
-            </div>
-            <button type="button" class="device-delete-btn" onclick="deleteDevice('switch', '${sw.id}')" aria-label="Delete switch">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
-        `;
+        
+        const info = document.createElement('div');
+        info.className = 'device-item-info';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'device-item-name';
+        nameSpan.textContent = sw.name + ' ';
+        const typeSpan = document.createElement('span');
+        typeSpan.style.fontSize = '0.75rem';
+        typeSpan.style.fontWeight = 'normal';
+        typeSpan.style.opacity = '0.75';
+        typeSpan.textContent = '(Switch)';
+        nameSpan.appendChild(typeSpan);
+        
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'device-item-meta';
+        metaDiv.textContent = `Cmd: ${cmdTopic} | Stat: ${statTopic}`;
+        
+        info.appendChild(nameSpan);
+        info.appendChild(metaDiv);
+        
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'device-delete-btn';
+        delBtn.setAttribute('aria-label', 'Delete switch');
+        delBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i>`;
+        delBtn.onclick = () => deleteDevice('switch', sw.id);
+        
+        item.appendChild(info);
+        item.appendChild(delBtn);
         list.appendChild(item);
     });
 }
@@ -450,19 +634,20 @@ window.deleteDevice = function(type, id) {
     saveDevices();
     renderDeviceList();
     initializeModules();
-}
+};
 
-// 6. Topic Discovery Renderer
+// 7. Topic Discovery Renderer
 function updateDiscoveryBanner(text, className) {
     const banner = document.getElementById('discovery-status-banner');
     if (banner) {
-        banner.innerText = text;
+        banner.textContent = text;
         banner.className = `discovery-banner ${className}`;
     }
 }
 
 function renderDiscoveryResults() {
     const results = document.getElementById('discovery-results');
+    if (!results) return;
     results.innerHTML = '';
 
     if (discoveredTopics.length === 0) {
@@ -473,53 +658,125 @@ function renderDiscoveryResults() {
     discoveredTopics.forEach(topic => {
         const item = document.createElement('div');
         item.className = 'discovery-item';
-        item.innerHTML = `
-            <div class="discovery-item-path">${topic}</div>
-            <div class="discovery-item-actions">
-                <button type="button" class="btn btn-primary btn-xs" onclick="quickAddDevice('switch', '${topic}')">
-                    + Switch
-                </button>
-                <button type="button" class="btn btn-primary btn-xs" onclick="quickAddDevice('sensor', '${topic}')">
-                    + Sensor
-                </button>
-            </div>
-        `;
+        
+        const pathDiv = document.createElement('div');
+        pathDiv.className = 'discovery-item-path';
+        pathDiv.textContent = topic;
+        
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'discovery-item-actions';
+        
+        const switchBtn = document.createElement('button');
+        switchBtn.type = 'button';
+        switchBtn.className = 'btn btn-primary btn-xs';
+        switchBtn.textContent = '+ Switch';
+        switchBtn.onclick = () => quickAddDevice('switch', topic);
+        
+        const sensorBtn = document.createElement('button');
+        sensorBtn.type = 'button';
+        sensorBtn.className = 'btn btn-primary btn-xs';
+        sensorBtn.textContent = '+ Sensor';
+        sensorBtn.onclick = () => quickAddDevice('sensor', topic);
+        
+        actionsDiv.appendChild(switchBtn);
+        actionsDiv.appendChild(sensorBtn);
+        
+        item.appendChild(pathDiv);
+        item.appendChild(actionsDiv);
         results.appendChild(item);
     });
 }
 
 window.quickAddDevice = function(type, topic) {
-    document.getElementById('new-dev-name').value = topic.split('/').pop().replace(/_/g, ' ');
-    document.getElementById('new-dev-type').value = type;
-    document.getElementById('new-dev-topic').value = topic;
+    const nameInput = document.getElementById('new-dev-name');
+    const typeSelect = document.getElementById('new-dev-type');
+    if (nameInput) nameInput.value = topic.split('/').pop().replace(/_/g, ' ');
+    if (typeSelect) typeSelect.value = type;
     
+    const switchFieldsPanel = document.getElementById('switch-fields');
     const sensorFieldsPanel = document.getElementById('sensor-fields');
-    if (type === 'sensor') {
-        sensorFieldsPanel.classList.remove('hidden');
-        document.getElementById('new-dev-unit').value = '';
-        document.getElementById('new-dev-icon').value = 'fa-microchip';
+    
+    if (type === 'switch') {
+        if (switchFieldsPanel) switchFieldsPanel.classList.remove('hidden');
+        if (sensorFieldsPanel) sensorFieldsPanel.classList.add('hidden');
+        let cmd = topic;
+        let stat = topic;
+        if (topic.startsWith('stat/')) {
+            cmd = topic.replace('stat/', 'cmnd/');
+            stat = topic;
+        } else if (topic.startsWith('cmnd/')) {
+            cmd = topic;
+            stat = topic.replace('cmnd/', 'stat/');
+        }
+        const cmdInput = document.getElementById('new-dev-cmd-topic');
+        const statInput = document.getElementById('new-dev-stat-topic');
+        if (cmdInput) cmdInput.value = cmd;
+        if (statInput) statInput.value = stat;
     } else {
-        sensorFieldsPanel.classList.add('hidden');
+        if (switchFieldsPanel) switchFieldsPanel.classList.add('hidden');
+        if (sensorFieldsPanel) sensorFieldsPanel.classList.remove('hidden');
+        const topicInput = document.getElementById('new-dev-topic');
+        const unitInput = document.getElementById('new-dev-unit');
+        const iconInput = document.getElementById('new-dev-icon');
+        if (topicInput) topicInput.value = topic;
+        if (unitInput) unitInput.value = '';
+        if (iconInput) iconInput.value = 'fa-microchip';
     }
 
-    document.querySelector('.settings-tab-btn[data-tab="devices"]').click();
-    document.getElementById('new-dev-name').focus();
-}
+    const tabBtn = document.querySelector('.settings-tab-btn[data-tab="devices"]');
+    if (tabBtn) tabBtn.click();
+    if (nameInput) nameInput.focus();
+};
 
-// 7. Time Clock
+// 8. Time Clock
 function updateClock() {
-    const now = new Date();
-    document.getElementById('live-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const clockElem = document.getElementById('live-clock');
+    if (clockElem) {
+        const now = new Date();
+        clockElem.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
 }
 
-// Initialize Everything
+// Initialize Everything & Bind Verification Gateway
 document.addEventListener('DOMContentLoaded', () => {
     renderDirectory();
     renderNotes();
     updateClock();
     setInterval(updateClock, 1000);
 
-    initializeModules();
+    // Run Security Authentication Gateway Check
+    checkPortalAuth();
+
+    // Authentication Form Binding
+    const authForm = document.getElementById('auth-form');
+    const authErrorBanner = document.getElementById('auth-error-banner');
+    const portalPassInput = document.getElementById('portal-passcode-input');
+    const lockBtn = document.getElementById('lock-portal-btn');
+
+    if (authForm) {
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inputVal = portalPassInput ? portalPassInput.value.trim() : '';
+            const currentPass = settings.portalPasscode || "1234";
+            
+            if (inputVal === currentPass) {
+                sessionStorage.setItem('smartniwasPortalAuth', 'true');
+                if (authErrorBanner) authErrorBanner.classList.add('hidden');
+                if (portalPassInput) portalPassInput.value = '';
+                checkPortalAuth();
+            } else {
+                if (authErrorBanner) authErrorBanner.classList.remove('hidden');
+                if (portalPassInput) {
+                    portalPassInput.value = '';
+                    portalPassInput.focus();
+                }
+            }
+        });
+    }
+
+    if (lockBtn) {
+        lockBtn.addEventListener('click', () => lockPortal());
+    }
 
     // Modal declarations
     const noteModal = document.getElementById('note-modal');
@@ -538,40 +795,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const cctvEnabledCheckbox = document.getElementById('cctv-enabled');
     const cctvSettingsFields = document.getElementById('cctv-settings-fields');
 
-    // Toggle CCTV settings input panel
-    cctvEnabledCheckbox.addEventListener('change', () => {
-        if (cctvEnabledCheckbox.checked) {
-            cctvSettingsFields.classList.remove('hidden');
-        } else {
-            cctvSettingsFields.classList.add('hidden');
-        }
-    });
+    if (cctvEnabledCheckbox && cctvSettingsFields) {
+        cctvEnabledCheckbox.addEventListener('change', () => {
+            if (cctvEnabledCheckbox.checked) {
+                cctvSettingsFields.classList.remove('hidden');
+            } else {
+                cctvSettingsFields.classList.add('hidden');
+            }
+        });
+    }
 
     const showSettings = () => {
-        document.getElementById('mqtt-host').value = settings.mqttHost;
-        document.getElementById('mqtt-user').value = settings.mqttUser;
-        document.getElementById('mqtt-pass').value = settings.mqttPass;
+        if (!settingsModal) return;
+        const passcodeSetting = document.getElementById('portal-passcode-setting');
+        const mqttHostInput = document.getElementById('mqtt-host');
+        const mqttUserInput = document.getElementById('mqtt-user');
+        const mqttPassInput = document.getElementById('mqtt-pass');
         
-        cctvEnabledCheckbox.checked = settings.cctvEnabled;
-        if (settings.cctvEnabled) {
-            cctvSettingsFields.classList.remove('hidden');
-        } else {
-            cctvSettingsFields.classList.add('hidden');
+        if (passcodeSetting) passcodeSetting.value = settings.portalPasscode || "1234";
+        if (mqttHostInput) mqttHostInput.value = settings.mqttHost;
+        if (mqttUserInput) mqttUserInput.value = settings.mqttUser;
+        if (mqttPassInput) mqttPassInput.value = settings.mqttPass;
+        
+        if (cctvEnabledCheckbox) {
+            cctvEnabledCheckbox.checked = settings.cctvEnabled;
+            if (cctvSettingsFields) {
+                if (settings.cctvEnabled) {
+                    cctvSettingsFields.classList.remove('hidden');
+                } else {
+                    cctvSettingsFields.classList.add('hidden');
+                }
+            }
         }
         
-        document.getElementById('nvr-host').value = settings.nvrHost;
-        document.getElementById('nvr-user').value = settings.nvrUser;
-        document.getElementById('nvr-pass').value = settings.nvrPass;
-        document.getElementById('nvr-channels').value = settings.nvrChannels;
+        const nvrHostInput = document.getElementById('nvr-host');
+        const nvrUserInput = document.getElementById('nvr-user');
+        const nvrPassInput = document.getElementById('nvr-pass');
+        const nvrChannelsInput = document.getElementById('nvr-channels');
+        
+        if (nvrHostInput) nvrHostInput.value = settings.nvrHost;
+        if (nvrUserInput) nvrUserInput.value = settings.nvrUser;
+        if (nvrPassInput) nvrPassInput.value = settings.nvrPass;
+        if (nvrChannelsInput) nvrChannelsInput.value = settings.nvrChannels;
 
-        // Reset to first tab "Connection"
-        document.querySelector('.settings-tab-btn[data-tab="connection"]').click();
+        const firstTab = document.querySelector('.settings-tab-btn[data-tab="connection"]');
+        if (firstTab) firstTab.click();
 
         settingsModal.classList.add('active');
         settingsModal.setAttribute('aria-hidden', 'false');
     };
 
     const hideSettings = () => {
+        if (!settingsModal) return;
         settingsModal.classList.remove('active');
         settingsModal.setAttribute('aria-hidden', 'true');
         if (discoveryActive) {
@@ -580,69 +855,83 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const showNoteModal = () => {
+        if (!noteModal) return;
         noteModal.classList.add('active');
         noteModal.setAttribute('aria-hidden', 'false');
-        noteText.focus();
+        if (noteText) noteText.focus();
     };
 
     const hideNoteModal = () => {
+        if (!noteModal) return;
         noteModal.classList.remove('active');
         noteModal.setAttribute('aria-hidden', 'true');
-        noteForm.reset();
+        if (noteForm) noteForm.reset();
     };
 
-    // Auto-prompt settings if MQTT is not configured
-    if (!settings.mqttHost) {
+    if (!settings.mqttHost && sessionStorage.getItem('smartniwasPortalAuth') === 'true') {
         setTimeout(showSettings, 600);
     }
 
-    // Bind Notice Board Events
-    addNoteBtn.addEventListener('click', showNoteModal);
-    cancelNoteBtn.addEventListener('click', hideNoteModal);
-    closeNoteBtn.addEventListener('click', hideNoteModal);
+    if (addNoteBtn) addNoteBtn.addEventListener('click', showNoteModal);
+    if (cancelNoteBtn) cancelNoteBtn.addEventListener('click', hideNoteModal);
+    if (closeNoteBtn) closeNoteBtn.addEventListener('click', hideNoteModal);
     
-    noteForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const text = noteText.value.trim();
-        if (text) {
-            const newId = Date.now();
-            notes.push({ id: newId, text: text });
-            saveNotes();
-            renderNotes();
-            
-            const element = document.querySelector(`[data-id="${newId}"]`);
-            if (element) {
-                element.classList.add('note-added');
+    if (noteForm) {
+        noteForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = noteText ? noteText.value.trim() : '';
+            if (text) {
+                const newId = Date.now();
+                notes.push({ id: newId, text: text });
+                saveNotes();
+                renderNotes();
+                
+                const element = document.querySelector(`[data-id="${newId}"]`);
+                if (element) {
+                    element.classList.add('note-added');
+                }
+                hideNoteModal();
             }
-            hideNoteModal();
-        }
-    });
+        });
+    }
 
-    // Bind Settings Events
-    openSettingsBtn.addEventListener('click', showSettings);
-    closeSettingsBtn.addEventListener('click', hideSettings);
-    cancelSettingsBtn.addEventListener('click', hideSettings);
+    if (openSettingsBtn) openSettingsBtn.addEventListener('click', showSettings);
+    if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', hideSettings);
+    if (cancelSettingsBtn) cancelSettingsBtn.addEventListener('click', hideSettings);
 
-    settingsForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        settings.mqttHost = document.getElementById('mqtt-host').value.trim();
-        settings.mqttUser = document.getElementById('mqtt-user').value.trim();
-        settings.mqttPass = document.getElementById('mqtt-pass').value.trim();
-        
-        settings.cctvEnabled = cctvEnabledCheckbox.checked;
-        settings.nvrHost = document.getElementById('nvr-host').value.trim();
-        settings.nvrUser = document.getElementById('nvr-user').value.trim();
-        settings.nvrPass = document.getElementById('nvr-pass').value.trim();
-        settings.nvrChannels = document.getElementById('nvr-channels').value.trim();
-        
-        localStorage.setItem('smartniwasSettings', JSON.stringify(settings));
-        
-        initializeModules();
-        hideSettings();
-    });
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const passcodeSetting = document.getElementById('portal-passcode-setting');
+            const mqttHostInput = document.getElementById('mqtt-host');
+            const mqttUserInput = document.getElementById('mqtt-user');
+            const mqttPassInput = document.getElementById('mqtt-pass');
+            const nvrHostInput = document.getElementById('nvr-host');
+            const nvrUserInput = document.getElementById('nvr-user');
+            const nvrPassInput = document.getElementById('nvr-pass');
+            const nvrChannelsInput = document.getElementById('nvr-channels');
 
-    // Settings Tab Switchers
+            if (passcodeSetting && passcodeSetting.value.trim()) {
+                settings.portalPasscode = passcodeSetting.value.trim();
+            }
+            settings.mqttHost = mqttHostInput ? mqttHostInput.value.trim() : '';
+            settings.mqttUser = mqttUserInput ? mqttUserInput.value.trim() : '';
+            settings.mqttPass = mqttPassInput ? mqttPassInput.value.trim() : '';
+            
+            settings.cctvEnabled = cctvEnabledCheckbox ? cctvEnabledCheckbox.checked : false;
+            settings.nvrHost = nvrHostInput ? nvrHostInput.value.trim() : '';
+            settings.nvrUser = nvrUserInput ? nvrUserInput.value.trim() : '';
+            settings.nvrPass = nvrPassInput ? nvrPassInput.value.trim() : '';
+            settings.nvrChannels = nvrChannelsInput ? nvrChannelsInput.value.trim() : '101,201';
+            
+            localStorage.setItem('smartniwasSettings', JSON.stringify(settings));
+            
+            initializeModules();
+            hideSettings();
+        });
+    }
+
     const tabButtons = document.querySelectorAll('.settings-tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
     const footerActions = document.getElementById('settings-form-actions');
@@ -655,12 +944,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
 
             tabPanels.forEach(p => p.classList.add('hidden'));
-            document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
+            const targetPanel = document.getElementById(`tab-${targetTab}`);
+            if (targetPanel) targetPanel.classList.remove('hidden');
 
-            if (targetTab === 'connection') {
-                footerActions.classList.remove('hidden');
-            } else {
-                footerActions.classList.add('hidden');
+            if (footerActions) {
+                if (targetTab === 'connection') {
+                    footerActions.classList.remove('hidden');
+                } else {
+                    footerActions.classList.add('hidden');
+                }
             }
 
             if (targetTab === 'devices') {
@@ -669,51 +961,77 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Add Device select dropdown type trigger
     const newDevTypeSelect = document.getElementById('new-dev-type');
+    const switchFieldsPanel = document.getElementById('switch-fields');
     const sensorFieldsPanel = document.getElementById('sensor-fields');
-    newDevTypeSelect.addEventListener('change', () => {
-        if (newDevTypeSelect.value === 'sensor') {
-            sensorFieldsPanel.classList.remove('hidden');
-        } else {
-            sensorFieldsPanel.classList.add('hidden');
-        }
-    });
+    if (newDevTypeSelect) {
+        newDevTypeSelect.addEventListener('change', () => {
+            if (newDevTypeSelect.value === 'sensor') {
+                if (switchFieldsPanel) switchFieldsPanel.classList.add('hidden');
+                if (sensorFieldsPanel) sensorFieldsPanel.classList.remove('hidden');
+            } else {
+                if (switchFieldsPanel) switchFieldsPanel.classList.remove('hidden');
+                if (sensorFieldsPanel) sensorFieldsPanel.classList.add('hidden');
+            }
+        });
+    }
 
-    // Add Device Action
     const addDeviceBtnAction = document.getElementById('add-device-btn-action');
-    addDeviceBtnAction.addEventListener('click', () => {
-        const name = document.getElementById('new-dev-name').value.trim();
-        const type = newDevTypeSelect.value;
-        const topic = document.getElementById('new-dev-topic').value.trim();
+    if (addDeviceBtnAction) {
+        addDeviceBtnAction.addEventListener('click', () => {
+            const nameInput = document.getElementById('new-dev-name');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const type = newDevTypeSelect ? newDevTypeSelect.value : 'switch';
+            const id = 'dev-' + Date.now();
 
-        if (!name || !topic) {
-            alert('Please enter a display name and MQTT topic.');
-            return;
-        }
+            if (type === 'switch') {
+                const cmdInput = document.getElementById('new-dev-cmd-topic');
+                const statInput = document.getElementById('new-dev-stat-topic');
+                const cmdTopic = cmdInput ? cmdInput.value.trim() : '';
+                const statTopic = statInput ? statInput.value.trim() : '';
+                if (!name || (!cmdTopic && !statTopic)) {
+                    alert('Please enter a display name and at least one MQTT topic (Command or State).');
+                    return;
+                }
+                iotDevices.switches.push({
+                    id,
+                    name,
+                    cmdTopic: cmdTopic || statTopic,
+                    statTopic: statTopic || cmdTopic,
+                    state: 'OFF'
+                });
+            } else {
+                const topicInput = document.getElementById('new-dev-topic');
+                const topic = topicInput ? topicInput.value.trim() : '';
+                if (!name || !topic) {
+                    alert('Please enter a display name and sensor MQTT topic.');
+                    return;
+                }
+                const unitInput = document.getElementById('new-dev-unit');
+                const iconInput = document.getElementById('new-dev-icon');
+                const unit = unitInput ? unitInput.value.trim() : '';
+                const icon = (iconInput && iconInput.value.trim()) ? iconInput.value.trim() : 'fa-microchip';
+                iotDevices.sensors.push({ id, name, topic, value: '--', unit, icon });
+            }
 
-        const id = 'dev-' + Date.now();
+            saveDevices();
+            renderDeviceList();
+            initializeModules();
 
-        if (type === 'switch') {
-            iotDevices.switches.push({ id, name, topic, state: 'OFF' });
-        } else {
-            const unit = document.getElementById('new-dev-unit').value.trim();
-            const icon = document.getElementById('new-dev-icon').value.trim() || 'fa-microchip';
-            iotDevices.sensors.push({ id, name, topic, value: '--', unit, icon });
-        }
+            if (nameInput) nameInput.value = '';
+            const cmdIn = document.getElementById('new-dev-cmd-topic');
+            const statIn = document.getElementById('new-dev-stat-topic');
+            const topIn = document.getElementById('new-dev-topic');
+            const unitIn = document.getElementById('new-dev-unit');
+            const iconIn = document.getElementById('new-dev-icon');
+            if (cmdIn) cmdIn.value = '';
+            if (statIn) statIn.value = '';
+            if (topIn) topIn.value = '';
+            if (unitIn) unitIn.value = '';
+            if (iconIn) iconIn.value = '';
+        });
+    }
 
-        saveDevices();
-        renderDeviceList();
-        initializeModules();
-
-        // Reset Add Device form
-        document.getElementById('new-dev-name').value = '';
-        document.getElementById('new-dev-topic').value = '';
-        document.getElementById('new-dev-unit').value = '';
-        document.getElementById('new-dev-icon').value = '';
-    });
-
-    // Discovery Controls Setup
     const discoveryToggleBtn = document.getElementById('discovery-toggle-btn');
     
     function startDiscovery() {
@@ -725,12 +1043,14 @@ document.addEventListener('DOMContentLoaded', () => {
         discoveredTopics = [];
         renderDiscoveryResults();
         
-        const wildcard = document.getElementById('discovery-wildcard').value.trim() || '#';
-        console.log("Discovery scanner started on wildcard:", wildcard);
+        const wildcardInput = document.getElementById('discovery-wildcard');
+        const wildcard = wildcardInput ? wildcardInput.value.trim() || '#' : '#';
         mqttClient.subscribe(wildcard);
 
-        discoveryToggleBtn.innerHTML = '<i class="fa-solid fa-square"></i> Stop Scanning';
-        discoveryToggleBtn.style.background = '#ef4444';
+        if (discoveryToggleBtn) {
+            discoveryToggleBtn.innerHTML = '<i class="fa-solid fa-square"></i> Stop Scanning';
+            discoveryToggleBtn.style.background = '#ef4444';
+        }
         updateDiscoveryBanner(`SCANNING... Listening to topic wildcard: "${wildcard}"`, "status-scanning");
     }
 
@@ -738,35 +1058,37 @@ document.addEventListener('DOMContentLoaded', () => {
         discoveryActive = false;
         
         if (mqttClient && mqttClient.connected) {
-            const wildcard = document.getElementById('discovery-wildcard').value.trim() || '#';
+            const wildcardInput = document.getElementById('discovery-wildcard');
+            const wildcard = wildcardInput ? wildcardInput.value.trim() || '#' : '#';
             mqttClient.unsubscribe(wildcard);
         }
 
-        console.log("Discovery scanner stopped.");
-        discoveryToggleBtn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Start Scanning';
-        discoveryToggleBtn.style.background = '';
+        if (discoveryToggleBtn) {
+            discoveryToggleBtn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Start Scanning';
+            discoveryToggleBtn.style.background = '';
+        }
         updateDiscoveryBanner("Scanner is currently IDLE.", "status-idle");
     }
 
-    discoveryToggleBtn.addEventListener('click', () => {
-        if (!discoveryActive) {
-            startDiscovery();
-        } else {
-            stopDiscovery();
-        }
-    });
+    if (discoveryToggleBtn) {
+        discoveryToggleBtn.addEventListener('click', () => {
+            if (!discoveryActive) {
+                startDiscovery();
+            } else {
+                stopDiscovery();
+            }
+        });
+    }
 
-    // Close on overlay clicks
     window.addEventListener('click', (e) => {
         if (e.target === noteModal) hideNoteModal();
         if (e.target === settingsModal) hideSettings();
     });
 
-    // Close on Escape Key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (noteModal.classList.contains('active')) hideNoteModal();
-            if (settingsModal.classList.contains('active')) hideSettings();
+            if (noteModal && noteModal.classList.contains('active')) hideNoteModal();
+            if (settingsModal && settingsModal.classList.contains('active')) hideSettings();
         }
     });
 });

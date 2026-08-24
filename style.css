@@ -1122,3 +1122,62 @@ input:checked + .slider:before {
     max-width: 320px;
     margin: 0;
 }
+
+/* Independent Authentication Gateway Styles */
+body.portal-locked main.portal-container {
+    filter: blur(18px);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.25;
+    transition: all 0.4s ease;
+}
+
+#auth-modal {
+    z-index: 2500;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(16px);
+}
+
+.auth-modal-content {
+    text-align: center;
+    max-width: 440px;
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+    padding: 2.5rem 2rem 2rem 2rem;
+}
+
+.auth-icon-wrapper {
+    font-size: 3rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    filter: drop-shadow(0 0 15px rgba(129, 140, 248, 0.5));
+}
+
+.auth-subtitle {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.4;
+}
+
+.auth-error-banner {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid #ef4444;
+    color: #f87171;
+    border-radius: 0.6rem;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}

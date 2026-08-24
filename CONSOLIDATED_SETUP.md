@@ -211,3 +211,23 @@ Set up free email forwarding rules for your household members under the Cloudfla
    - **Destination**: Select their verified personal email address from the dropdown.
    - Click **Save**.
 5. Repeat this process for all 12+ household members.
+
+---
+
+## Part 5: Alexa Smart Home Integration via Node-RED
+
+To control Tasmota switches and smart devices via Amazon Alexa voice commands, Node-RED acts as the local smart home bridge:
+
+1. **Architecture Overview**:
+   * **Alexa Voice Assistant** -> **Vendor Skill** (e.g. *Node-RED Alexa Smart Home* or *Virtual Smart Home*) -> **Node-RED Server** (Local Network) -> **Mosquitto MQTT Broker** -> **Tasmota Switches**.
+
+2. **Setup Steps**:
+   * **Install Node-RED**: Run Node-RED on your local home server or VM.
+   * **Install Alexa Palette**: In Node-RED *Manage Palette*, install `node-red-contrib-alexa-smart-home-v3` or `node-red-contrib-virtual-smart-home`.
+   * **Enable Vendor Skill**: In the Amazon Alexa mobile app, search for and enable the corresponding Node-RED skill and log in with your account credentials.
+   * **Configure Alexa Nodes in Node-RED**:
+     - Create an Alexa device node (e.g. `Living Room Light`, Device Type: `Switch`).
+     - Wire the node output to an **MQTT Out** node configured for Mosquitto (`localhost:1883` or `wss://mqtt.smartniwas.com`).
+     - Set the MQTT Topic to `cmnd/<device>/POWER` and map payload `true`/`false` or `1`/`0` to `ON`/`OFF`.
+   * **Discover Devices**: Ask Alexa: *"Alexa, discover devices"*. Alexa will find the newly defined switches and allow seamless voice control.
+
