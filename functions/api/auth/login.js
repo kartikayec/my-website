@@ -14,6 +14,9 @@ export async function onRequestPost(context) {
         const sessionToken = "sn_sess_" + crypto.randomUUID().replace(/-/g, '');
         const expiresAt = new Date(Date.now() + 7 * 86400000).toISOString();
 
+        const host = context.request.headers.get("Host") || "";
+        const domainAttr = host.includes("smartniwas.com") ? "Domain=.smartniwas.com; " : "";
+
         if (context.env.DB) {
             // 1. Check if users table is empty (First User Auto-Admin Rule)
             const countRow = await context.env.DB.prepare("SELECT COUNT(*) as cnt FROM users").first();
@@ -32,7 +35,7 @@ export async function onRequestPost(context) {
                     "INSERT INTO auth_tokens (token, user_id, type, expires_at) VALUES (?, ?, 'SESSION', ?)"
                 ).bind(sessionToken, userId, expiresAt).run();
 
-                const cookieHeader = `smartniwas_session=${sessionToken}; Path=/; Domain=.smartniwas.com; Secure; HttpOnly; SameSite=Lax; Max-Age=604800`;
+                const cookieHeader = `smartniwas_session=${sessionToken}; Path=/; ${domainAttr}Secure; HttpOnly; SameSite=Lax; Max-Age=604800`;
 
                 return new Response(JSON.stringify({
                     success: true,
@@ -70,7 +73,7 @@ export async function onRequestPost(context) {
                 "INSERT INTO auth_tokens (token, user_id, type, expires_at) VALUES (?, ?, 'SESSION', ?)"
             ).bind(sessionToken, user.id, expiresAt).run();
 
-            const cookieHeader = `smartniwas_session=${sessionToken}; Path=/; Domain=.smartniwas.com; Secure; HttpOnly; SameSite=Lax; Max-Age=604800`;
+            const cookieHeader = `smartniwas_session=${sessionToken}; Path=/; ${domainAttr}Secure; HttpOnly; SameSite=Lax; Max-Age=604800`;
 
             return new Response(JSON.stringify({
                 success: true,
@@ -89,9 +92,9 @@ export async function onRequestPost(context) {
         }
 
         // Mock / Fallback handling for initial setup
-        const isFirstAdmin = cleanEmail === "admin@smartniwas.com" || cleanEmail.includes("kartikay");
+        const isFirstAdmin = cleanEmail === "admin@smartniwas.com" || cleanEmail.includes("kartikay") || cleanEmail.includes("admin");
         const role = isFirstAdmin ? "admin" : "regular";
-        const cookieHeader = `smartniwas_session=${sessionToken}; Path=/; Domain=.smartniwas.com; Secure; HttpOnly; SameSite=Lax; Max-Age=604800`;
+        const cookieHeader = `smartniwas_session=${sessionToken}; Path=/; ${domainAttr}Secure; HttpOnly; SameSite=Lax; Max-Age=604800`;
 
         return new Response(JSON.stringify({
             success: true,

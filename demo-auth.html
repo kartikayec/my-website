@@ -161,11 +161,11 @@
             <form id="login-form">
                 <div class="form-group">
                     <label for="login-email" class="form-label">Email Address (Username):</label>
-                    <input type="email" id="login-email" class="form-input" placeholder="user@smartniwas.com" required>
+                    <input type="email" id="login-email" class="form-input" placeholder="admin@smartniwas.com" required value="admin@smartniwas.com">
                 </div>
                 <div class="form-group">
                     <label for="login-password" class="form-label">Password:</label>
-                    <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required minlength="6">
+                    <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required minlength="6" value="1234567890">
                 </div>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-key"></i> Log In</button>
             </form>
@@ -304,7 +304,7 @@
                 document.getElementById('reset-form-title').innerHTML = '<i class="fa-solid fa-key"></i> Accept Invitation & Set Password';
             } else {
                 // Initialize Session Check
-                const user = await SmartNiwasAuth.init({
+                await SmartNiwasAuth.init({
                     onAuthSuccess: (u) => {
                         userEmailDisplay.textContent = u.email;
                         userRoleBadge.textContent = u.role.toUpperCase();
@@ -332,6 +332,14 @@
                 try {
                     const data = await SmartNiwasAuth.login(email, pass);
                     showBanner(`Welcome back, ${data.user.email}!`, 'success');
+                    userEmailDisplay.textContent = data.user.email;
+                    userRoleBadge.textContent = (data.user.role || 'admin').toUpperCase();
+                    if (data.user.mustChangePassword) {
+                        switchView(viewResetPass);
+                        document.getElementById('current-pass-group').classList.add('hidden');
+                    } else {
+                        switchView(viewDashboard);
+                    }
                 } catch (err) {
                     showBanner(`❌ ${err.message}`, 'error');
                 }
@@ -341,6 +349,7 @@
             document.getElementById('logout-btn').addEventListener('click', async () => {
                 await SmartNiwasAuth.logout();
                 showBanner('Logged out successfully.', 'info');
+                switchView(viewLogin);
             });
 
             // Navigation
@@ -401,7 +410,7 @@
                         await SmartNiwasAuth.resetPassword(resetToken, newPass, confirmPass);
                         showBanner('✅ Password updated successfully! Please log in.', 'success');
                         setTimeout(() => {
-                            window.location.href = '/demo-auth';
+                            window.location.href = '/demo-auth.html';
                         }, 1500);
                     } else {
                         await SmartNiwasAuth.changePassword(oldPass, newPass, confirmPass);
