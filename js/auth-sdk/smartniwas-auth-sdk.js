@@ -2,7 +2,8 @@
 (function(window) {
     'use strict';
 
-    const API_BASE = '/api/auth';
+    // Target Cloudflare Pages serverless API directly for reliable JSON API responses across all subdomains
+    const API_BASE = 'https://portal.smartniwas.com/api/auth';
 
     const SmartNiwasAuth = {
         currentUser: null,
