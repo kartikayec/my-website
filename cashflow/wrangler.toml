@@ -1,0 +1,14 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "smartniwas-cashflow-api"
+main = "src/index.js"
+compatibility_date = "2026-08-08"
+
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "smartniwas_cashflow"
+database_id = "PLACEHOLDER_DATABASE_ID" # Will be generated when you run: npx wrangler d1 create smartniwas_cashflow
+
+# Daily Cron trigger at 8:00 AM (runs the scheduled mail checks)
+[triggers]
+crons = [ "0 8 * * *" ]

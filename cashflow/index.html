@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartNiwas | Cash Flow & Payment Reminders</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --font-sans: 'Outfit', sans-serif;
+            --bg-base: #090d16;
+            --bg-surface: rgba(17, 24, 39, 0.7);
+            --bg-surface-hover: rgba(31, 41, 55, 0.8);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            --primary-hover: #4f46e5;
+            --secondary: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        /* Glassmorphic Container */
+        .container {
+            max-width: 900px;
+            width: 90%;
+            padding: 2.5rem;
+            background: var(--bg-surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 
+                        0 1px 1px rgba(255, 255, 255, 0.05) inset;
+            position: relative;
+            text-align: center;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-top-left-radius: var(--radius-lg);
+            border-top-right-radius: var(--radius-lg);
+        }
+
+        /* Forms */
+        .form-card {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: var(--primary);
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            padding: 0.6rem 1.25rem;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition-smooth);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border-color: transparent;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        /* Dashboard Overview Grid */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 600px) {
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .overview-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .overview-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 0.25rem;
+        }
+
+        /* Tables & Lists */
+        .table-container {
+            overflow-x: auto;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-md);
+            margin: 1.5rem 0;
+        }
+
+        .payment-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .payment-table th, .payment-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .payment-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.02);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .payment-table tr:hover {
+            background: rgba(99, 102, 241, 0.03);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .badge-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .badge-inactive {
+            background: rgba(100, 116, 139, 0.1);
+            color: #94a3b8;
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        .badge-overdue {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Modal Overlay */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1.25rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN BOARD -->
+    <div id="login-view" class="container">
+        <header style="margin-bottom: 2rem;">
+            <h1 style="font-size: 2.25rem; font-weight: 800;">SmartNiwas Cash Flow</h1>
+            <p style="color: var(--text-secondary);">Authenticate to manage payment commitments</p>
+        </header>
+
+        <form id="login-form" class="form-card">
+            <div class="form-group">
+                <label class="form-label" for="login-email">Email Address</label>
+                <input type="email" id="login-email" class="form-input" placeholder="admin@smartniwas.com" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="login-password">Password</label>
+                <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+            </div>
+            <div id="login-error" style="color: var(--danger); font-size: 0.85rem; margin-bottom: 1rem; font-weight: 500;"></div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Log In</button>
+        </form>
+    </div>
+
+    <!-- 2. MAIN DASHBOARD VIEW (Hidden by default) -->
+    <div id="dashboard-view" class="container" style="display: none; text-align: left;">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem;">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 800;">smart<strong style="color:var(--primary)">niwas</strong> cashflow</h1>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Payment commitments & cash flow projections</p>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <button id="add-bill-btn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Commitment</button>
+                <button id="logout-btn" class="btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </div>
+        </header>
+
+        <!-- Stats Overview Row -->
+        <div class="overview-grid">
+            <div class="overview-card">
+                <span class="form-label">Normalized Monthly Cost</span>
+                <div id="monthly-outflow" class="overview-value">₹0.00</div>
+            </div>
+            <div class="overview-card">
+                <span class="form-label">Active Tracked Bills</span>
+                <div id="bill-count" class="overview-value">0</div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;"><i class="fa-solid fa-list"></i> Tracked Commitments</h3>
+        
+        <!-- Payments Table Grid -->
+        <div class="table-container">
+            <table class="payment-table">
+                <thead>
+                    <tr>
+                        <th>Bill Name</th>
+                        <th>Category</th>
+                        <th>Cycle</th>
+                        <th>Amount</th>
+                        <th>Monthly Cost</th>
+                        <th>Next Due</th>
+                        <th>Status</th>
+                        <th style="width: 130px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="payment-tbody">
+                    <!-- Dynamic Rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 3. ADD / EDIT COMMITMENT MODAL -->
+    <div id="bill-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2 id="modal-title" style="margin-bottom: 1.5rem; font-size: 1.25rem;"><i class="fa-solid fa-pen-to-square"></i> Add Commitment</h2>
+            <form id="bill-form">
+                <input type="hidden" id="bill-id">
+                <div class="form-group">
+                    <label class="form-label" for="bill-name">Bill Name</label>
+                    <input type="text" id="bill-name" class="form-input" placeholder="e.g. Broadband Internet" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bill-category">Category</label>
+                    <input type="text" id="bill-category" class="form-input" placeholder="e.g. Utility, Insurance, Rent" required>
+                </div>
+                <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="bill-amount">Amount (₹)</label>
+                        <input type="number" id="bill-amount" step="0.01" class="form-input" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="bill-frequency">Frequency</label>
+                        <select id="bill-frequency" class="form-select" required>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="annual">Annual</option>
+                            <option value="one-time">One-time</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bill-due-date">Next Due Date</label>
+                    <input type="date" id="bill-due-date" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bill-notes">Notes / Reference (Optional)</label>
+                    <input type="text" id="bill-notes" class="form-input" placeholder="Cheque reference or account details...">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">Save Commitment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client Script -->
+    <script>
+        // Use relative URL paths. Cloudflare Pages automatically proxies /api requests via the Worker proxy.
+        // During local wrangler testing, proxy binds naturally.
+        const API_BASE = '/api';
+
+        // App States
+        let token = localStorage.getItem('cashflow_token');
+        let payments = [];
+
+        // DOM elements
+        const loginView = document.getElementById('login-view');
+        const dashboardView = document.getElementById('dashboard-view');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const billTbody = document.getElementById('payment-tbody');
+        const monthlyOutflowEl = document.getElementById('monthly-outflow');
+        const billCountEl = document.getElementById('bill-count');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        // Modal elements
+        const billModal = document.getElementById('bill-modal');
+        const addBillBtn = document.getElementById('add-bill-btn');
+        const closeModals = document.querySelectorAll('.close-modal');
+        const billForm = document.getElementById('bill-form');
+
+        // Check if token exists on mount
+        if (token) {
+            showDashboard();
+        }
+
+        // Login Handler
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            loginError.textContent = '';
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Authentication failed');
+
+                if (data.token) {
+                    localStorage.setItem('cashflow_token', data.token);
+                    token = data.token;
+                    showDashboard();
+                } else {
+                    // First register callback message
+                    alert(data.message);
+                }
+            } catch (err) {
+                loginError.textContent = err.message;
+            }
+        });
+
+        // Logout Handler
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('cashflow_token');
+            token = null;
+            dashboardView.style.display = 'none';
+            loginView.style.display = 'block';
+        });
+
+        // Show Dashboard & Fetch Data
+        function showDashboard() {
+            loginView.style.display = 'none';
+            dashboardView.style.display = 'block';
+            loadPayments();
+        }
+
+        // Fetch Payments
+        async function loadPayments() {
+            try {
+                const res = await fetch(`${API_BASE}/payments`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) return triggerLogout();
+                
+                payments = await res.json();
+                renderDashboard();
+            } catch (err) {
+                console.error('Error fetching payments:', err);
+            }
+        }
+
+        // Trigger session logout
+        function triggerLogout() {
+            localStorage.removeItem('cashflow_token');
+            token = null;
+            dashboardView.style.display = 'none';
+            loginView.style.display = 'block';
+            alert('Your session has expired. Please log in again.');
+        }
+
+        // Render data inside Dashboard
+        function renderDashboard() {
+            billTbody.innerHTML = '';
+            
+            let totalOutflow = 0.0;
+            let activeCount = 0;
+            const today = new Date().toISOString().split('T')[0];
+
+            payments.forEach(p => {
+                if (p.status === 'active') {
+                    activeCount++;
+                    let normalized = 0.0;
+                    if (p.frequency === 'monthly') normalized = p.amount;
+                    else if (p.frequency === 'quarterly') normalized = p.amount / 3.0;
+                    else if (p.frequency === 'annual') normalized = p.amount / 12.0;
+                    totalOutflow += normalized;
+                }
+
+                const isOverdue = p.status === 'active' && p.next_due_date < today;
+                const statusBadge = isOverdue 
+                    ? '<span class="badge badge-overdue">Overdue</span>' 
+                    : `<span class="badge badge-${p.status}">${p.status}</span>`;
+
+                const monthlyCost = p.frequency === 'one-time' ? '-' : `₹${(p.frequency === 'monthly' ? p.amount : (p.frequency === 'quarterly' ? p.amount/3 : p.amount/12)).toFixed(2)}`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${p.name}</strong>${p.notes ? `<br><span style="font-size:0.8rem; color:var(--text-secondary)">${p.notes}</span>` : ''}</td>
+                    <td>${p.category}</td>
+                    <td style="text-transform:capitalize;">${p.frequency}</td>
+                    <td style="font-weight:600;">₹${parseFloat(p.amount).toFixed(2)}</td>
+                    <td style="color:var(--primary); font-weight:600;">${monthlyCost}</td>
+                    <td style="font-weight:600; color:${isOverdue ? 'var(--danger)' : 'var(--text-primary)'}">${p.next_due_date}</td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align:right;">
+                        <button class="btn btn-primary" onclick="triggerRollover(${p.id})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" title="Mark as Paid & advance next due date">✓ Paid</button>
+                        <button class="btn btn-danger" onclick="deleteBill(${p.id})" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" title="Delete commitment">🗑</button>
+                    </td>
+                `;
+                billTbody.appendChild(tr);
+            });
+
+            monthlyOutflowEl.textContent = `₹${totalOutflow.toFixed(2)}`;
+            billCountEl.textContent = activeCount;
+        }
+
+        // Rollover Paid Payment
+        async function triggerRollover(id) {
+            if (!confirm('Mark this payment as paid? The system will automatically advance the next due date.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/payments/${id}/rollover`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    loadPayments();
+                }
+            } catch (err) {
+                console.error('Error during payment rollover:', err);
+            }
+        }
+
+        // Delete Payment
+        async function deleteBill(id) {
+            if (!confirm('Are you sure you want to delete this payment commitment?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/payments/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    loadPayments();
+                }
+            } catch (err) {
+                console.error('Error deleting payment:', err);
+            }
+        }
+
+        // Open Modal
+        addBillBtn.addEventListener('click', () => {
+            document.getElementById('bill-id').value = '';
+            billForm.reset();
+            document.getElementById('modal-title').innerHTML = '<i class="fa-solid fa-plus"></i> Add Commitment';
+            billModal.classList.add('active');
+        });
+
+        // Close Modal
+        closeModals.forEach(btn => {
+            btn.addEventListener('click', () => {
+                billModal.classList.remove('active');
+            });
+        });
+
+        // Save Commitment
+        billForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('bill-name').value;
+            const category = document.getElementById('bill-category').value;
+            const amount = document.getElementById('bill-amount').value;
+            const frequency = document.getElementById('bill-frequency').value;
+            const next_due_date = document.getElementById('bill-due-date').value;
+            const notes = document.getElementById('bill-notes').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/payments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, category, amount, frequency, next_due_date, notes })
+                });
+
+                if (res.ok) {
+                    billModal.classList.remove('active');
+                    loadPayments();
+                }
+            } catch (err) {
+                console.error('Error saving payment:', err);
+            }
+        });
+    </script>
+</body>
+</html>
