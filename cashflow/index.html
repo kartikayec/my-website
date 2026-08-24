@@ -486,6 +486,7 @@
         const monthlyOutflowEl = document.getElementById('monthly-outflow');
         const billCountEl = document.getElementById('bill-count');
         const logoutBtn = document.getElementById('logout-btn');
+        const manageUsersBtn = document.getElementById('manage-users-btn');
         
         // Modal elements
         const billModal = document.getElementById('bill-modal');
@@ -546,7 +547,6 @@
             
             // Toggle Manage Users button based on role
             const userRole = localStorage.getItem('user_role');
-            const manageUsersBtn = document.getElementById('manage-users-btn');
             if (userRole === 'admin') {
                 manageUsersBtn.style.display = 'inline-flex';
             } else {
