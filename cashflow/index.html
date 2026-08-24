@@ -335,6 +335,7 @@
                 <p style="color: var(--text-secondary); font-size: 0.9rem;">Payment commitments & cash flow projections</p>
             </div>
             <div style="display: flex; gap: 0.75rem;">
+                <button id="manage-users-btn" class="btn" style="display: none; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15);"><i class="fa-solid fa-users"></i> Manage Users</button>
                 <button id="add-bill-btn" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Commitment</button>
                 <button id="logout-btn" class="btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
             </div>
@@ -419,6 +420,53 @@
         </div>
     </div>
 
+    <!-- 4. MANAGE USERS MODAL -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <button class="close-modal">&times;</button>
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem;"><i class="fa-solid fa-users"></i> Manage Users</h2>
+            
+            <!-- Add User Form -->
+            <form id="user-form" style="margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem;">
+                <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="user-name">Full Name</label>
+                        <input type="text" id="user-name" class="form-input" placeholder="e.g. John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="user-email">Email Address</label>
+                        <input type="email" id="user-email" class="form-input" placeholder="e.g. member@smartniwas.com" required>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label" for="user-role">Role</label>
+                    <select id="user-role" class="form-select" required>
+                        <option value="user">User (Standard)</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Invite Member</button>
+            </form>
+
+            <!-- Users List -->
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;"><i class="fa-solid fa-house-user"></i> Active Members</h3>
+            <div class="table-container" style="max-height: 250px; overflow-y: auto;">
+                <table class="payment-table" style="font-size: 0.9rem;">
+                     <thead>
+                         <tr>
+                             <th>Name</th>
+                             <th>Email</th>
+                             <th>Role</th>
+                         </tr>
+                     </thead>
+                     <tbody id="user-tbody">
+                         <!-- Dynamic rows -->
+                     </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Client Script -->
     <script>
         // Use relative URL paths. Cloudflare Pages automatically proxies /api requests via the Worker proxy.
@@ -470,6 +518,7 @@
 
                 if (data.token) {
                     localStorage.setItem('cashflow_token', data.token);
+                    localStorage.setItem('user_role', data.user.role);
                     token = data.token;
                     showDashboard();
                 } else {
@@ -484,6 +533,7 @@
         // Logout Handler
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('cashflow_token');
+            localStorage.removeItem('user_role');
             token = null;
             dashboardView.style.display = 'none';
             loginView.style.display = 'block';
@@ -493,6 +543,16 @@
         function showDashboard() {
             loginView.style.display = 'none';
             dashboardView.style.display = 'block';
+            
+            // Toggle Manage Users button based on role
+            const userRole = localStorage.getItem('user_role');
+            const manageUsersBtn = document.getElementById('manage-users-btn');
+            if (userRole === 'admin') {
+                manageUsersBtn.style.display = 'inline-flex';
+            } else {
+                manageUsersBtn.style.display = 'none';
+            }
+
             loadPayments();
         }
 
@@ -606,12 +666,51 @@
             billModal.classList.add('active');
         });
 
-        // Close Modal
+        // User Management Elements
+        const userModal = document.getElementById('user-modal');
+        const userTbody = document.getElementById('user-tbody');
+        const userForm = document.getElementById('user-form');
+
+        // Open User Modal
+        manageUsersBtn.addEventListener('click', () => {
+            userForm.reset();
+            userModal.classList.add('active');
+            loadUsers();
+        });
+
+        // Close Modal (for all modals)
         closeModals.forEach(btn => {
             btn.addEventListener('click', () => {
                 billModal.classList.remove('active');
+                userModal.classList.remove('active');
             });
         });
+
+        // Fetch Users Directory
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API_BASE}/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const users = await res.json();
+                    userTbody.innerHTML = '';
+                    users.forEach(u => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${u.name}</strong></td>
+                            <td>${u.email}</td>
+                            <td style="text-transform:capitalize;">
+                                <span class="badge badge-${u.role === 'admin' ? 'active' : 'inactive'}">${u.role}</span>
+                            </td>
+                        `;
+                        userTbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error('Error fetching users:', err);
+            }
+        }
 
         // Save Commitment
         billForm.addEventListener('submit', async (e) => {
@@ -640,6 +739,37 @@
                 }
             } catch (err) {
                 console.error('Error saving payment:', err);
+            }
+        });
+
+        // Invite User Form Handler
+        userForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('user-name').value;
+            const email = document.getElementById('user-email').value;
+            const role = document.getElementById('user-role').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, email, role })
+                });
+
+                if (res.ok) {
+                    alert(`Invitation sent to ${name} (${email})!`);
+                    userForm.reset();
+                    loadUsers();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to invite user.');
+                }
+            } catch (err) {
+                console.error('Error inviting user:', err);
+                alert('Failed to connect to the backend server.');
             }
         });
     </script>

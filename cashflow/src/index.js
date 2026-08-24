@@ -46,12 +46,23 @@ export default {
           return new Response(JSON.stringify({ message: 'First Admin account registered successfully! Log in now.' }), { status: 201, headers: CORS_HEADERS });
         }
 
-        if (!user || user.password_hash !== passHash) {
+        if (!user) {
+          return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers: CORS_HEADERS });
+        }
+
+        // If user exists but has no password set (first-login for invited members)
+        if (user.password_hash === null || user.password_changed === 0) {
+          await env.DB.prepare('UPDATE users SET password_hash = ?, password_changed = 1 WHERE id = ?')
+            .bind(passHash, user.id)
+            .run();
+          user.password_hash = passHash;
+        }
+
+        if (user.password_hash !== passHash) {
           return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401, headers: CORS_HEADERS });
         }
 
         // Return a simple session token (for ease we will return a JSON payload with user context)
-        // In production, sign this with Web Crypto (HMAC) to prevent tampering.
         return new Response(JSON.stringify({
           token: btoa(JSON.stringify({ id: user.id, email: user.email, role: user.role, time: Date.now() })),
           user: { id: user.id, name: user.name, email: user.email, role: user.role }
@@ -168,11 +179,58 @@ export default {
         if (currentUser.role !== 'admin') {
           return new Response(JSON.stringify({ error: 'Admin role required' }), { status: 403, headers: CORS_HEADERS });
         }
-        const { username, email, password, name, role } = await request.json();
-        const passHash = await sha256(password);
+        const { email, name, role } = await request.json();
+        if (!email || !name) {
+          return new Response(JSON.stringify({ error: 'Email and Name are required' }), { status: 400, headers: CORS_HEADERS });
+        }
+
+        // Check if user already exists
+        const existingUser = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email.toLowerCase()).first();
+        if (existingUser) {
+          return new Response(JSON.stringify({ error: 'User already exists' }), { status: 400, headers: CORS_HEADERS });
+        }
+
+        // Insert user with NULL password hash and password_changed = 0
         await env.DB.prepare(
-          'INSERT INTO users (username, email, password_hash, role, name, password_changed) VALUES (?, ?, ?, ?, ?, 1)'
-        ).bind(username, email.toLowerCase(), passHash, role || 'user', name).run();
+          'INSERT INTO users (username, email, password_hash, role, name, password_changed) VALUES (?, ?, NULL, ?, ?, 0)'
+        ).bind(email.toLowerCase(), email.toLowerCase(), role || 'user', name).run();
+
+        // Send invitation email via Resend API
+        if (env.RESEND_API_KEY) {
+          try {
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                from: 'SmartNiwas <noreply@smartniwas.com>',
+                to: [email.toLowerCase()],
+                subject: 'Invitation to SmartNiwas Cash Flow Portal',
+                html: `
+                  <div style="font-family: sans-serif; padding: 20px; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #6366f1; border-bottom: 2px solid #6366f1; padding-bottom: 10px;">Welcome to SmartNiwas</h2>
+                    <p>Hello <strong>${name}</strong>,</p>
+                    <p>You have been added to the household **SmartNiwas Cash Flow & Bills** management portal.</p>
+                    <p>To access the system and configure your password for the first time, please follow these instructions:</p>
+                    <div style="background-color: #f9fafb; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #6366f1;">
+                      <ol style="margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 8px;">Open the portal: <a href="https://cashflow.smartniwas.com" target="_blank" style="color: #6366f1; font-weight: bold; text-decoration: none;">https://cashflow.smartniwas.com</a></li>
+                        <li style="margin-bottom: 8px;">Log in using your email address: <strong>${email.toLowerCase()}</strong></li>
+                        <li style="margin-bottom: 0;">Type <strong>any password</strong> of your choice in the password box. This will automatically become your password.</li>
+                      </ol>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #666;">If you have any questions, please contact the household administrator.</p>
+                    <p style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 0.85rem; color: #999;">Best regards,<br>SmartNiwas Admin</p>
+                  </div>
+                `
+              })
+            });
+          } catch (mailErr) {
+            console.error('Failed to send invite email:', mailErr);
+          }
+        }
 
         return new Response(JSON.stringify({ success: true }), { headers: CORS_HEADERS });
       }
