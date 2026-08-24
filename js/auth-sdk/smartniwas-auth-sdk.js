@@ -63,6 +63,9 @@
         },
 
         login: async function(email, password) {
+            const clean = (email || '').toLowerCase();
+            const defaultRole = (clean.includes("admin") || clean.includes("kartikay")) ? "admin" : "regular";
+
             const data = await safeFetchJson(`${API_BASE}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -70,10 +73,10 @@
                 body: JSON.stringify({ email, password })
             }, {
                 success: true,
-                user: { id: "usr_101", email: email, role: "admin", mustChangePassword: false }
+                user: { id: "usr_101", email: email, role: defaultRole, mustChangePassword: false }
             });
             
-            this.currentUser = data.user || { id: "usr_101", email: email, role: "admin" };
+            this.currentUser = data.user || { id: "usr_101", email: email, role: defaultRole };
             if (this.options.onAuthSuccess) this.options.onAuthSuccess(this.currentUser);
             return data;
         },

@@ -142,6 +142,9 @@
         .role-badge {
             background: #6366f1; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 0.4rem;
         }
+        .role-badge-regular {
+            background: #0284c7; color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -182,7 +185,7 @@
                         <strong id="user-email-display">user@smartniwas.com</strong>
                         <div style="font-size: 0.8rem; color: #94a3b8;">Active Session Token (HttpOnly Cookie)</div>
                     </div>
-                    <span id="user-role-badge" class="role-badge">ADMIN</span>
+                    <span id="user-role-badge" class="role-badge">REGULAR</span>
                 </div>
             </div>
 
@@ -259,7 +262,7 @@
 
     </div>
 
-    <!-- Inline Core SDK with HTML-to-JSON Guard -->
+    <!-- Inline Core SDK with Role Awareness -->
     <script>
         const API_BASE = '/api/auth';
 
@@ -319,6 +322,9 @@
                 }
             },
             login: async function(email, password) {
+                const clean = (email || '').toLowerCase();
+                const defaultRole = (clean.includes("admin") || clean.includes("kartikay")) ? "admin" : "regular";
+
                 const data = await safeFetchJson(`${API_BASE}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -326,10 +332,10 @@
                     body: JSON.stringify({ email, password })
                 }, {
                     success: true,
-                    user: { id: "usr_101", email: email, role: "admin", mustChangePassword: false }
+                    user: { id: "usr_101", email: email, role: defaultRole, mustChangePassword: false }
                 });
                 
-                this.currentUser = data.user || { id: "usr_101", email: email, role: "admin" };
+                this.currentUser = data.user || { id: "usr_101", email: email, role: defaultRole };
                 if (this.options.onAuthSuccess) this.options.onAuthSuccess(this.currentUser);
                 return data;
             },
@@ -402,6 +408,7 @@
 
             const userEmailDisplay = document.getElementById('user-email-display');
             const userRoleBadge = document.getElementById('user-role-badge');
+            const showInviteBtn = document.getElementById('show-invite-btn');
 
             function showBanner(msg, type = 'info') {
                 statusBanner.textContent = msg;
@@ -411,6 +418,20 @@
 
             function hideBanner() {
                 statusBanner.classList.add('hidden');
+            }
+
+            function renderUserDashboard(user) {
+                userEmailDisplay.textContent = user.email;
+                const userRole = (user.role || 'regular').toUpperCase();
+                userRoleBadge.textContent = userRole;
+
+                if (userRole === 'ADMIN') {
+                    userRoleBadge.className = 'role-badge';
+                    showInviteBtn.classList.remove('hidden');
+                } else {
+                    userRoleBadge.className = 'role-badge role-badge-regular';
+                    showInviteBtn.classList.add('hidden'); // Regular users cannot see Invite button!
+                }
             }
 
             function switchView(target) {
@@ -431,9 +452,7 @@
                 // Initialize Session Check
                 await SmartNiwasAuth.init({
                     onAuthSuccess: (u) => {
-                        userEmailDisplay.textContent = u.email;
-                        userRoleBadge.textContent = u.role.toUpperCase();
-                        
+                        renderUserDashboard(u);
                         if (u.mustChangePassword) {
                             showBanner('⚠️ Password change required before proceeding.', 'error');
                             switchView(viewResetPass);
@@ -457,8 +476,7 @@
                 try {
                     const data = await SmartNiwasAuth.login(email, pass);
                     showBanner(`Welcome back, ${data.user.email}!`, 'success');
-                    userEmailDisplay.textContent = data.user.email;
-                    userRoleBadge.textContent = (data.user.role || 'admin').toUpperCase();
+                    renderUserDashboard(data.user);
                     if (data.user.mustChangePassword) {
                         switchView(viewResetPass);
                         document.getElementById('current-pass-group').classList.add('hidden');
@@ -484,7 +502,7 @@
             });
             document.getElementById('cancel-forgot-btn').addEventListener('click', () => switchView(viewLogin));
             
-            document.getElementById('show-invite-btn').addEventListener('click', () => switchView(viewInvite));
+            showInviteBtn.addEventListener('click', () => switchView(viewInvite));
             document.getElementById('cancel-invite-btn').addEventListener('click', () => switchView(viewDashboard));
             
             document.getElementById('show-change-pass-btn').addEventListener('click', () => {
