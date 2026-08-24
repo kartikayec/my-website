@@ -7,7 +7,7 @@ echo "=================================================="
 
 # 1. Update system package index
 echo "Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+sudo apt-get update --allow-releaseinfo-change && sudo apt upgrade -y
 
 # 2. Install Nginx and Git
 echo "Installing Nginx, Git, and utilities..."
