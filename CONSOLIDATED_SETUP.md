@@ -23,6 +23,19 @@ Follow these steps in your **Cloudflare Dashboard** to re-route your sub-apps:
 
 ## Part 2: Deploying the Cash Flow System on Cloudflare Serverless
 
+### Method A: Automated Setup (Recommended)
+We have provided an automated setup script that executes all setup, binding, migration, and deployment commands for you:
+1. Navigate to the `cashflow` folder in your terminal.
+2. Run the setup script:
+   ```bash
+   bash setup_d1_database.sh
+   ```
+3. Follow the on-screen prompts to input your Resend API Key when prompted.
+
+---
+
+### Method B: Manual Setup Steps
+
 ### 1. Initialize the Cloudflare D1 SQLite Database
 Navigate to the `cashflow` folder in your terminal and execute:
 ```bash
@@ -59,7 +72,7 @@ npx wrangler secret put RESEND_API_KEY
    npx wrangler deploy
    ```
 2. Deploy the Cash Flow frontend Page project on Cloudflare:
-   - **Method A: Continuous Git Deployment (Recommended)**:
+   - **Continuous Git Deployment (Recommended)**:
      - Go to **Workers & Pages** -> **Create Application** -> **Pages** -> **Connect to Git**.
      - Connect your GitHub account and select the `kartikayec/my-website` repository.
      - **Build Configuration**:
@@ -81,6 +94,23 @@ npx wrangler secret put RESEND_API_KEY
 ## Part 3: Deploying the Landing Menu on the Oracle VM
 
 To host the main entry menu (`smartniwas.com` and `www.smartniwas.com`) securely on your Oracle VM without opening public firewall ports:
+
+### Method A: Automated Setup (Recommended)
+We have provided a VM auto-installer script that handles packages, folder creation, index file copies, virtual host configuration, and Cloudflare Tunnel updates.
+1. Connect to your Oracle VM via SSH:
+   ```bash
+   ssh ubuntu@<YOUR_VM_IP>
+   ```
+2. Git clone your repository or upload `landing-menu/setup_oracle_vm.sh` and `landing-menu/index.html` to the VM.
+3. Run the installer:
+   ```bash
+   cd landing-menu/
+   bash setup_oracle_vm.sh
+   ```
+
+---
+
+### Method B: Manual Setup Steps
 
 ### 1. Copy the Landing Page Files to the VM
 SSH into your Oracle VM and create a web directory:
