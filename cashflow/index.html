@@ -457,6 +457,7 @@
                              <th>Name</th>
                              <th>Email</th>
                              <th>Role</th>
+                             <th style="width: 50px; text-align: right;">Action</th>
                          </tr>
                      </thead>
                      <tbody id="user-tbody">
@@ -520,6 +521,7 @@
                 if (data.token) {
                     localStorage.setItem('cashflow_token', data.token);
                     localStorage.setItem('user_role', data.user.role);
+                    localStorage.setItem('user_email', data.user.email);
                     token = data.token;
                     showDashboard();
                 } else {
@@ -535,6 +537,7 @@
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('cashflow_token');
             localStorage.removeItem('user_role');
+            localStorage.removeItem('user_email');
             token = null;
             dashboardView.style.display = 'none';
             loginView.style.display = 'block';
@@ -695,14 +698,21 @@
                 if (res.ok) {
                     const users = await res.json();
                     userTbody.innerHTML = '';
+                    const loggedInEmail = localStorage.getItem('user_email');
                     users.forEach(u => {
                         const tr = document.createElement('tr');
+                        const isSelf = u.email === loggedInEmail;
+                        const actionBtn = isSelf 
+                            ? `<span style="font-size:0.8rem; color:var(--text-secondary)">Self</span>`
+                            : `<button class="btn btn-danger" onclick="deleteUser(${u.id}, '${u.name.replace(/'/g, "\\'")}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑</button>`;
+                        
                         tr.innerHTML = `
                             <td><strong>${u.name}</strong></td>
                             <td>${u.email}</td>
                             <td style="text-transform:capitalize;">
                                 <span class="badge badge-${u.role === 'admin' ? 'active' : 'inactive'}">${u.role}</span>
                             </td>
+                            <td style="text-align:right;">${actionBtn}</td>
                         `;
                         userTbody.appendChild(tr);
                     });
@@ -711,6 +721,26 @@
                 console.error('Error fetching users:', err);
             }
         }
+
+        // Delete User from Directory
+        window.deleteUser = async function(id, name) {
+            if (!confirm(`Are you sure you want to delete ${name} from the household?`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/users/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    loadUsers();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to delete user.');
+                }
+            } catch (err) {
+                console.error('Error deleting user:', err);
+                alert('Failed to connect to the backend server.');
+            }
+        };
 
         // Save Commitment
         billForm.addEventListener('submit', async (e) => {

@@ -239,6 +239,22 @@ export default {
         return new Response(JSON.stringify({ success: true }), { headers: CORS_HEADERS });
       }
 
+      // 11. DELETE /api/users/:id
+      if (url.pathname.startsWith('/api/users/') && method === 'DELETE') {
+        if (currentUser.role !== 'admin') {
+          return new Response(JSON.stringify({ error: 'Admin role required' }), { status: 403, headers: CORS_HEADERS });
+        }
+        const id = url.pathname.split('/').pop();
+        
+        // Prevent admins from deleting themselves
+        if (parseInt(id) === currentUser.id) {
+          return new Response(JSON.stringify({ error: 'You cannot delete your own account' }), { status: 400, headers: CORS_HEADERS });
+        }
+
+        await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
+        return new Response(JSON.stringify({ success: true }), { headers: CORS_HEADERS });
+      }
+
       return new Response(JSON.stringify({ error: 'Route Not Found' }), { status: 404, headers: CORS_HEADERS });
 
     } catch (e) {
