@@ -25,10 +25,10 @@ Follow these steps in your **Cloudflare Dashboard** to re-route your sub-apps:
 
 ### Method A: Automated Setup (Recommended)
 We have provided an automated setup script that executes all setup, binding, migration, and deployment commands for you:
-1. Open your terminal at the root of the cloned `my-website` folder.
-2. Change directory and run the setup script:
+1. Open your terminal (which starts at `C:\Users\karti`).
+2. Navigate directly to the `cashflow` folder and run the setup script:
    ```bash
-   cd cashflow
+   cd OneDrive\Antigravity\Projects\smartniwas\cashflow
    bash setup_d1_database.sh
    ```
 3. Follow the on-screen prompts to input your Resend API Key when prompted.
@@ -38,9 +38,9 @@ We have provided an automated setup script that executes all setup, binding, mig
 ### Method B: Manual Setup Steps
 
 ### 1. Initialize the Cloudflare D1 SQLite Database
-Open your terminal at the root of the project, change directory, and execute:
+Open your terminal (which starts at `C:\Users\karti`), change directory, and execute:
 ```bash
-cd cashflow
+cd OneDrive\Antigravity\Projects\smartniwas\cashflow
 npx wrangler d1 create smartniwas_cashflow
 ```
 *Note the generated **Database ID** output in your terminal.*
