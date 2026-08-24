@@ -403,8 +403,7 @@ function renderIoTGrid() {
         input.checked = (sw.state === 'ON');
         input.onchange = () => toggleSwitch(sw.id);
         
-        const span = document.createElement('span');
-        span.className = 'slider';
+        const span = document.className = 'slider';
         
         label.appendChild(input);
         label.appendChild(span);
@@ -767,6 +766,31 @@ function clearSecurityStatus() {
     }
 }
 
+// Security Tab UI State Helper
+function updateSecurityTabUI() {
+    const isWeakPasscode = (settings.portalPasscode === '1234' || settings.portalPasscode.length < 10);
+    const badge = document.getElementById('pass-status-badge');
+    const fieldsWrapper = document.getElementById('security-fields-wrapper');
+
+    if (badge) {
+        if (isWeakPasscode) {
+            badge.textContent = "Action Required (Default 1234)";
+            badge.className = "status-badge status-offline";
+        } else {
+            badge.textContent = "Protected (10+ chars)";
+            badge.className = "status-badge status-online";
+        }
+    }
+
+    if (fieldsWrapper) {
+        if (isWeakPasscode) {
+            fieldsWrapper.classList.remove('hidden');
+        } else {
+            fieldsWrapper.classList.add('hidden');
+        }
+    }
+}
+
 // Initialize Everything & Bind Verification Gateway
 document.addEventListener('DOMContentLoaded', () => {
     renderDirectory();
@@ -781,8 +805,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const enforceBtn = document.getElementById('enforce-change-pin-btn');
     if (enforceBtn) {
         enforceBtn.addEventListener('click', () => {
-            const openSettingsBtn = document.getElementById('open-settings-btn');
-            if (openSettingsBtn) openSettingsBtn.click();
+            showSettings('security');
+            const fieldsWrapper = document.getElementById('security-fields-wrapper');
+            if (fieldsWrapper) fieldsWrapper.classList.remove('hidden');
+        });
+    }
+
+    // Toggle Change Passcode Button
+    const togglePassBtn = document.getElementById('toggle-change-pass-btn');
+    if (togglePassBtn) {
+        togglePassBtn.addEventListener('click', () => {
+            const fieldsWrapper = document.getElementById('security-fields-wrapper');
+            if (fieldsWrapper) {
+                fieldsWrapper.classList.toggle('hidden');
+                if (!fieldsWrapper.classList.contains('hidden')) {
+                    const passcodeSetting = document.getElementById('portal-passcode-setting');
+                    if (passcodeSetting) passcodeSetting.focus();
+                }
+            }
         });
     }
 
@@ -842,9 +882,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const showSettings = () => {
+    const showSettings = (preferredTab = 'connection') => {
         if (!settingsModal) return;
         clearSecurityStatus();
+        updateSecurityTabUI();
+
         const passcodeSetting = document.getElementById('portal-passcode-setting');
         const passcodeConfirm = document.getElementById('portal-passcode-confirm');
         const mqttHostInput = document.getElementById('mqtt-host');
@@ -878,8 +920,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nvrPassInput) nvrPassInput.value = settings.nvrPass;
         if (nvrChannelsInput) nvrChannelsInput.value = settings.nvrChannels;
 
-        const defaultTab = document.querySelector('.settings-tab-btn[data-tab="security"]');
-        if (defaultTab) defaultTab.click();
+        const targetBtn = document.querySelector(`.settings-tab-btn[data-tab="${preferredTab}"]`);
+        if (targetBtn) targetBtn.click();
 
         settingsModal.classList.add('active');
         settingsModal.setAttribute('aria-hidden', 'false');
@@ -932,7 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (openSettingsBtn) openSettingsBtn.addEventListener('click', showSettings);
+    if (openSettingsBtn) openSettingsBtn.addEventListener('click', () => showSettings('connection'));
     if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', hideSettings);
 
     // Tab 1: Security Form Handler (With Smooth Inline Feedback)
@@ -977,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (passcodeConfirm) passcodeConfirm.value = '';
 
             checkSecurityPolicy();
+            updateSecurityTabUI();
             showSecurityStatus('✅ Master Passcode updated successfully!', true);
 
             setTimeout(() => {
