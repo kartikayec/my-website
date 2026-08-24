@@ -46,7 +46,7 @@ export async function onRequestPost(context) {
             }
         }
 
-        const resetUrl = `https://smartniwas.com/demo-auth?reset=${resetToken}`;
+        const resetUrl = `https://portal.smartniwas.com/demo-auth.html?reset=${resetToken}`;
 
         const emailHtml = `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px;">

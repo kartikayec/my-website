@@ -39,13 +39,14 @@ export async function onRequestPost(context) {
             ).bind(inviteToken, userId, expiresAt).run();
         }
 
-        const inviteUrl = `https://smartniwas.com/demo-auth?invite=${inviteToken}`;
+        // Point to Cloudflare Pages endpoint with clean .html resolution
+        const inviteUrl = `https://portal.smartniwas.com/demo-auth.html?invite=${inviteToken}`;
 
         const emailHtml = `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px;">
                 <h2 style="color: #6366f1; margin-top: 0;">🏠 You've Been Invited to SmartNiwas</h2>
                 <p>An administrator has created a new account for you (<strong>${cleanEmail}</strong>) with the role of <strong>${userRole.toUpperCase()}</strong>.</p>
-                <p>Click the link below to accept your invite and set your password:</p>
+                <p>Click the button below to accept your invite and set your password:</p>
                 <p style="margin: 24px 0;">
                     <a href="${inviteUrl}" style="background-color: #6366f1; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">
                         Accept Invitation & Set Password
